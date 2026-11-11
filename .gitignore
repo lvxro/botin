@@ -1,0 +1,9 @@
+bin/
+obj/
+dist/
+*.user
+.vs/
+# volcados de depuración del lector de replays (builds Debug)
+cmds/
+failed/
+exports/

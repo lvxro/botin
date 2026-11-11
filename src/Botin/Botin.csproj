@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Botin</AssemblyName>
+    <RootNamespace>Botin</RootNamespace>
+    <Product>Botín</Product>
+    <Version>1.0.0</Version>
+    <ApplicationIcon>Assets\Botin.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- El lector de replays descubre sus tipos por reflexión: nada de trimming. -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>true</TieredPGO>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\lib\FortniteReplayReader\FortniteReplayReader.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Botin.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- WinForms solo se usa para el ícono de la bandeja: que no choque con los tipos de WPF. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+</Project>

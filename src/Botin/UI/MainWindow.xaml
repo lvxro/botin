@@ -1,0 +1,627 @@
+<Window x:Class="Botin.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Botin.UI"
+        Title="Botín" Width="1200" Height="800" MinWidth="980" MinHeight="620"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Bg}" FontFamily="{StaticResource UiFont}"
+        Foreground="{StaticResource Text}" UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ================= Encabezado ================= -->
+        <Grid Grid.Row="0" Margin="28,18,28,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="{StaticResource ChestIcon}" Width="34" Height="34"/>
+                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Botín" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="22" Foreground="{StaticResource Text}"/>
+                    <TextBlock Text="Contador de cofres de Fortnite" FontSize="11.5" Foreground="{StaticResource Dim}" Margin="0,-2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Estado -->
+            <Border x:Name="StatusPill" Grid.Column="1" Margin="28,0,0,0" VerticalAlignment="Center" CornerRadius="20"
+                    Padding="12,7" Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                <StackPanel Orientation="Horizontal">
+                    <Grid Width="10" Height="10" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusHalo" Fill="{StaticResource Green}" Opacity="0.35" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform><ScaleTransform x:Name="HaloScale"/></Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Ellipse x:Name="StatusDot" Fill="{StaticResource Green}" Width="8" Height="8"/>
+                    </Grid>
+                    <TextBlock x:Name="StatusText" Text="Esperando partida" Margin="9,0,0,0" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <Border x:Name="ProgressTrack" Width="110" Height="4" CornerRadius="2" Background="#2A3245" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="Collapsed">
+                        <Border x:Name="ProgressFill" HorizontalAlignment="Left" Width="0" CornerRadius="2" Background="{StaticResource Gold}"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button x:Name="ProfileBtn" Style="{StaticResource Btn}" Margin="0,0,10,0" Click="Profile_Click" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontWeight="Normal" VerticalAlignment="Center" Foreground="{StaticResource Muted}"/>
+                        <TextBlock x:Name="ProfileText" Margin="8,0,6,0" Text="Perfil"/>
+                        <TextBlock Text="&#xE70D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" FontWeight="Normal" VerticalAlignment="Center" Foreground="{StaticResource Muted}"/>
+                    </StackPanel>
+                </Button>
+                <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="12" Padding="14,6,8,6" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox x:Name="OverlaySwitch" Style="{StaticResource Switch}" Click="OverlaySwitch_Click" VerticalAlignment="Center">
+                            <TextBlock Text="Overlay en el juego" FontSize="13" FontWeight="SemiBold"/>
+                        </CheckBox>
+                        <Button x:Name="MoveBtn" Style="{StaticResource BtnGhost}" Margin="8,0,0,0" Click="Move_Click" ToolTip="Mostrar el overlay para arrastrarlo a donde quieras">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7C2;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontWeight="Normal" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="MoveText" Text="Ubicar" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+                <Button Style="{StaticResource IconBtn}" Content="&#xE713;" Click="Settings_Click" ToolTip="Ajustes"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ================= Aviso ================= -->
+        <Border x:Name="Banner" Grid.Row="1" Margin="28,12,28,0" CornerRadius="14" Padding="18,14" Visibility="Collapsed"
+                Background="#1F1A10" BorderBrush="#4A3A16" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE7BA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="18" Foreground="{StaticResource Gold}" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Margin="14,0">
+                    <TextBlock x:Name="BannerTitle" FontWeight="SemiBold" FontSize="13.5"/>
+                    <TextBlock x:Name="BannerText" Style="{StaticResource Sub}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BannerBtn2" Style="{StaticResource BtnGhost}" Content="Ahora no" Click="Banner2_Click" Margin="0,0,8,0" Visibility="Collapsed"/>
+                    <Button x:Name="BannerBtn" Style="{StaticResource BtnGold}" Content="Elegir carpeta" Click="Banner_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================= Contenido ================= -->
+        <ScrollViewer x:Name="Scroller" Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="28,16,20,28" Focusable="False" FocusVisualStyle="{x:Null}">
+            <StackPanel Margin="0,0,8,0">
+
+                <!-- Fila 1: números -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource Card}" Background="{StaticResource HeroBg}" BorderBrush="#3A2D12" Padding="24,20">
+                        <Grid x:Name="HeroGrid" SizeChanged="HeroGrid_SizeChanged">
+                            <Image Source="{StaticResource ChestIcon}" Width="170" Height="170" Opacity="0.06"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-46,-62" RenderTransformOrigin="0.5,0.5">
+                                <Image.RenderTransform><RotateTransform Angle="-14"/></Image.RenderTransform>
+                            </Image>
+                            <StackPanel>
+                                <TextBlock Text="COFRES ABIERTOS" Style="{StaticResource Caption}" Foreground="#C9A55A"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock x:Name="TotalText" Text="0" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="66"
+                                               Foreground="{StaticResource GoldText}" RenderTransformOrigin="0,0.5">
+                                        <TextBlock.RenderTransform><ScaleTransform x:Name="TotalScale"/></TextBlock.RenderTransform>
+                                    </TextBlock>
+                                    <Border x:Name="LiveChip" Visibility="Collapsed" VerticalAlignment="Center" Margin="14,8,0,0"
+                                            CornerRadius="10" Padding="10,4" Background="#33FF5C6C">
+                                        <TextBlock x:Name="LiveChipText" Text="● en partida" Foreground="#FF8E99" FontWeight="SemiBold" FontSize="12"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock x:Name="TotalSub" Text="Todavía no hay partidas" Style="{StaticResource Sub}" Foreground="#C4B490" Margin="0,-2,0,0"/>
+                                <StackPanel x:Name="HeroTrendRow" Orientation="Horizontal" Margin="0,10,0,0" Visibility="Collapsed">
+                                    <Border x:Name="HeroTrend" CornerRadius="8" Padding="8,3">
+                                        <TextBlock x:Name="HeroTrendText" FontSize="12" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <TextBlock Text="últimas 10 partidas vs. tu promedio" Style="{StaticResource Sub}" Foreground="#A89A7C" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="ESTA SESIÓN" Style="{StaticResource Caption}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock x:Name="SessionText" Text="0" Style="{StaticResource BigNum}"/>
+                                <Border x:Name="SessionTrend" CornerRadius="8" Padding="7,2" Margin="10,0,0,4" VerticalAlignment="Bottom" Visibility="Collapsed">
+                                    <TextBlock x:Name="SessionTrendText" FontSize="11.5" FontWeight="SemiBold"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock x:Name="SessionSub" Text="sin partidas todavía" Style="{StaticResource Sub}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="ÚLTIMA PARTIDA" Style="{StaticResource Caption}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock x:Name="LastText" Text="–" Style="{StaticResource BigNum}"/>
+                                <Border x:Name="LastTrend" CornerRadius="8" Padding="7,2" Margin="10,0,0,4" VerticalAlignment="Bottom" Visibility="Collapsed">
+                                    <TextBlock x:Name="LastTrendText" FontSize="11.5" FontWeight="SemiBold"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock x:Name="LastSub" Text="–" Style="{StaticResource Sub}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="6" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="TESOROS" Style="{StaticResource Caption}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="★" FontSize="26" Foreground="{StaticResource Purple}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TreasureText" Text="0" Style="{StaticResource BigNum}" Foreground="{StaticResource Purple}"/>
+                            </StackPanel>
+                            <TextBlock x:Name="TreasureSub" Text="de la búsqueda del tesoro" Style="{StaticResource Sub}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Estado vacío -->
+                <Border x:Name="EmptyState" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="36,32" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Source="{StaticResource ChestIcon}" Width="96" Height="96" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1" Margin="32,0,0,0">
+                            <TextBlock Text="Listo para contar" FontSize="22" FontWeight="SemiBold"/>
+                            <TextBlock Style="{StaticResource Sub}" FontSize="13.5" Margin="0,6,0,18"
+                                       Text="Botín lee los replays que Fortnite guarda al terminar cada partida. No toca el juego ni su memoria: solo lee esos archivos."/>
+                            <ui:StepRow Number="1" Title="Activá las repeticiones en Fortnite" Detail="Configuración → Juego → Repeticiones → Grabar repeticiones: Sí"/>
+                            <ui:StepRow Number="2" Title="Jugá en Pantalla completa en ventana" Detail="Así el overlay se ve encima del juego (Configuración → Video → Modo de ventana)."/>
+                            <ui:StepRow Number="3" Title="Jugá tranquilo" Detail="Unos segundos después de cada partida, los cofres se suman solos. Podés cerrar esta ventana: Botín sigue en la bandeja."/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Fila 2: gráfico + récords -->
+                <Grid x:Name="DataArea" Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.1*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock x:Name="ChartTitle" Text="Cofres por partida" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock x:Name="ChartSub" Text="Últimas 30 partidas" Style="{StaticResource Sub}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="3" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="ByMatch" Style="{StaticResource Segment}" GroupName="chart" Content="Por partida" IsChecked="True" Click="ChartMode_Click" ToolTip="Cada barra es una partida"/>
+                                        <RadioButton x:Name="ByDay" Style="{StaticResource Segment}" GroupName="chart" Content="Por día" Click="ChartMode_Click" ToolTip="Cada barra suma los cofres de un día"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <ui:BarChart x:Name="Chart" Grid.Row="1" MinHeight="230" Margin="0,16,0,0"/>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                                <Rectangle Width="14" Height="2" VerticalAlignment="Center" StrokeDashArray="2 2" Stroke="{StaticResource Muted}"/>
+                                <TextBlock Text="promedio" Style="{StaticResource Sub}" Margin="6,0,16,0"/>
+                                <TextBlock Text="★" Foreground="{StaticResource Purple}" VerticalAlignment="Center"/>
+                                <TextBlock Text="con tesoro" Style="{StaticResource Sub}" Margin="6,0,16,0"/>
+                                <Border Width="10" Height="10" CornerRadius="3" BorderBrush="#FFF0B8" BorderThickness="1.5" Background="{StaticResource Gold}" VerticalAlignment="Center"/>
+                                <TextBlock Text="récord" Style="{StaticResource Sub}" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Récord personal" Style="{StaticResource CardTitle}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBlock x:Name="BestText" Text="–" Style="{StaticResource BigNum}" Foreground="{StaticResource GoldText}"/>
+                                <TextBlock Text="cofres" Style="{StaticResource Sub}" VerticalAlignment="Bottom" Margin="8,0,0,7"/>
+                            </StackPanel>
+                            <TextBlock x:Name="BestSub" Text="–" Style="{StaticResource Sub}"/>
+
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,18"/>
+
+                            <UniformGrid Columns="3">
+                                <StackPanel>
+                                    <TextBlock x:Name="AvgText" Text="0" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="22"/>
+                                    <TextBlock Text="promedio" Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock x:Name="TodayText" Text="0" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="22"/>
+                                    <TextBlock Text="hoy" Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock x:Name="WinsText" Text="0" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="22"/>
+                                    <TextBlock Text="victorias" Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </UniformGrid>
+
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,18"/>
+
+                            <TextBlock Text="Tipos de cofre" Style="{StaticResource CardTitle}" FontSize="13.5" Margin="0,0,0,10"/>
+                            <ItemsControl x:Name="TypesList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{StaticResource Muted}"/>
+                                            <TextBlock Text="{Binding CountText}" FontSize="12.5" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                            <Border Grid.Row="1" Height="5" CornerRadius="3" Background="#1F2636" Margin="0,5,0,0">
+                                                <Border CornerRadius="3" Background="{Binding Brush}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Fila 2b: cuándo saqueás -->
+                    <Border Grid.Row="2" Grid.ColumnSpan="3" Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.1*"/>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="¿Cuándo saqueás?" Style="{StaticResource CardTitle}"/>
+                                <TextBlock x:Name="CurveSub" Text="Cofres por minuto, contando desde tu primer cofre (cuando aterrizás)" Style="{StaticResource Sub}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <ui:MinuteChart x:Name="Curve" Grid.Row="1" Height="210" Margin="0,14,0,0"/>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="34,8,0,0">
+                                <Border Width="12" Height="10" CornerRadius="3" VerticalAlignment="Center">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#4A3A1E" Offset="0"/>
+                                            <GradientStop Color="#FFC94D" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <TextBlock Text="cofres por partida en ese minuto" Style="{StaticResource Sub}" Margin="6,0,16,0"/>
+                                <Rectangle Width="14" Height="2" Fill="{StaticResource Blue}" VerticalAlignment="Center"/>
+                                <TextBlock Text="% de tus cofres acumulado" Style="{StaticResource Sub}" Margin="6,0,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.RowSpan="3" Margin="0,4,0,0">
+                                <TextBlock Text="EN LOS PRIMEROS 3 MINUTOS" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                                    <StackPanel Margin="0,0,0,16">
+                                        <TextBlock x:Name="CurveEarly" Text="–" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="24"/>
+                                        <TextBlock x:Name="CurveEarlySub" Text="cofres por partida" Style="{StaticResource Sub}"/>
+                                    </StackPanel>
+                                <TextBlock Text="TU MINUTO MÁS FUERTE" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                                    <StackPanel Margin="0,0,0,16">
+                                        <TextBlock x:Name="CurvePeak" Text="–" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="24"/>
+                                        <TextBlock x:Name="CurvePeakSub" Text="" Style="{StaticResource Sub}"/>
+                                    </StackPanel>
+                                <TextBlock Text="LA MITAD DE TUS COFRES" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                                    <StackPanel Margin="0,0,0,16">
+                                        <TextBlock x:Name="CurveHalf" Text="–" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="24"/>
+                                        <TextBlock x:Name="CurveHalfSub" Text="" Style="{StaticResource Sub}"/>
+                                    </StackPanel>
+                                <Border x:Name="CurveTipBox" Background="{StaticResource Bg}" CornerRadius="10" Padding="12,10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xEA80;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Foreground="{StaticResource Gold}" Margin="0,2,10,0" VerticalAlignment="Top"/>
+                                        <TextBlock x:Name="CurveTip" Style="{StaticResource Sub}" FontSize="12" MaxWidth="290"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Fila 3: historial + actividad -->
+                    <Border Grid.Row="4" Style="{StaticResource Card}" Padding="0">
+                        <StackPanel>
+                            <Grid Margin="20,18,20,12">
+                                <StackPanel>
+                                    <TextBlock Text="Historial" Style="{StaticResource CardTitle}"/>
+                                    <TextBlock x:Name="HistorySub" Text="" Style="{StaticResource Sub}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Style="{StaticResource BtnGhost}" HorizontalAlignment="Right" VerticalAlignment="Top" Click="ExportCsv_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontWeight="Normal" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Exportar CSV" Margin="6,0,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Grid Margin="20,0,20,8" TextElement.Foreground="{StaticResource Dim}" TextElement.FontSize="11" TextElement.FontWeight="SemiBold">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.1*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="0.8*"/>
+                                    <ColumnDefinition Width="0.55*"/>
+                                    <ColumnDefinition Width="1.3*"/>
+                                    <ColumnDefinition Width="0.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="CUÁNDO"/>
+                                <TextBlock Grid.Column="1" Text="MODO"/>
+                                <TextBlock Grid.Column="2" Text="PUESTO"/>
+                                <TextBlock Grid.Column="3" Text="ELIM."/>
+                                <TextBlock Grid.Column="4" Text="COFRES"/>
+                                <TextBlock Grid.Column="5" Text="★" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <ItemsControl x:Name="Rows">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                        <Border x:Name="row" Padding="20,10" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Background="{Binding RowBg}"
+                                                Cursor="Hand" Tag="{Binding Id}" MouseLeftButtonUp="Row_Click">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="1.1*"/>
+                                                    <ColumnDefinition Width="2*"/>
+                                                    <ColumnDefinition Width="0.8*"/>
+                                                    <ColumnDefinition Width="0.55*"/>
+                                                    <ColumnDefinition Width="1.3*"/>
+                                                    <ColumnDefinition Width="0.5*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding When}" FontSize="13" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Mode}" FontSize="13" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Place}" FontSize="13" Foreground="{Binding PlaceBrush}" FontWeight="{Binding PlaceWeight}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding Kills}" FontSize="13" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                                                <Grid Grid.Column="4" VerticalAlignment="Center">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="34"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Chests}" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="15" Foreground="{Binding ChestBrush}"/>
+                                                    <Border Grid.Column="1" Height="6" CornerRadius="3" Background="#1A2130" Margin="0,0,16,0" VerticalAlignment="Center">
+                                                        <Border CornerRadius="3" Background="{Binding ChestBrush}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
+                                                    </Border>
+                                                </Grid>
+                                                <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TreasureLabel}" Foreground="{StaticResource Purple}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Chevron}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" Foreground="{StaticResource Dim}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                        <Border Visibility="{Binding DetailVisibility}" Background="#0F131C" Padding="20,16,20,18" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <TextBlock Text="CÓMO FUE LA PARTIDA" Style="{StaticResource Caption}"/>
+                                                    <TextBlock Text="{Binding DetailMeta}" Style="{StaticResource Sub}" FontSize="12" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                                <ui:MatchTimeline Match="{Binding Match}" Margin="0,6,0,0"/>
+                                                <Grid Margin="0,10,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="COFRES" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                                                        <ItemsControl ItemsSource="{Binding KindChips}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border CornerRadius="8" Background="{StaticResource Surface2}" Padding="9,5" Margin="0,0,6,6">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <Border Width="6" Height="12" CornerRadius="2" Background="{Binding Brush}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                                                            <TextBlock Text="{Binding Name}" FontSize="12" Foreground="{StaticResource Muted}"/>
+                                                                            <TextBlock Text="{Binding Count}" FontSize="12" FontWeight="SemiBold" Margin="6,0,0,0"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <TextBlock Text="{Binding OthersText}" Style="{StaticResource Sub}" FontSize="12" Margin="0,4,0,0"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2">
+                                                        <TextBlock Text="TESOROS" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                                                        <TextBlock Text="Ningún tesoro en esta partida." Style="{StaticResource Sub}" FontSize="12" Visibility="{Binding NoTreasureVisibility}"/>
+                                                        <ItemsControl ItemsSource="{Binding TreasureItems}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="0,0,0,8">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Text="★" Foreground="{StaticResource Purple}" FontSize="14" Margin="0,0,8,0"/>
+                                                                        <StackPanel Grid.Column="1">
+                                                                            <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                                            <TextBlock Text="{Binding Where}" Style="{StaticResource Sub}" FontSize="11.5"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                        </StackPanel>
+                                        <DataTemplate.Triggers>
+                                            <Trigger SourceName="row" Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="row" Property="Background" Value="#151B28"/>
+                                            </Trigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button x:Name="MoreBtn" Style="{StaticResource BtnGhost}" Margin="0,4,0,12" HorizontalAlignment="Center" Click="More_Click" Content="Ver más"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="Actividad" Style="{StaticResource CardTitle}"/>
+                            <TextBlock x:Name="ActivityEmpty" Text="Acá vas a ver cada partida que se cuenta." Style="{StaticResource Sub}" Margin="0,8,0,0"/>
+                            <ItemsControl x:Name="ActivityList" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Width="8" Height="8" Fill="{Binding Brush}" VerticalAlignment="Top" Margin="0,5,12,0"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Text}" FontSize="12.5" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Time}" FontSize="11" Foreground="{StaticResource Dim}" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================= Panel de ajustes ================= -->
+        <Grid x:Name="SettingsLayer" Grid.RowSpan="3" Visibility="Collapsed">
+            <Border Background="#99000000" MouseDown="SettingsBackdrop_MouseDown"/>
+            <Border x:Name="SettingsPanel" Width="420" HorizontalAlignment="Right" Background="{StaticResource Surface}"
+                    BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0">
+                <Border.RenderTransform><TranslateTransform x:Name="SettingsShift" X="420"/></Border.RenderTransform>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Margin="24,20,16,8">
+                        <TextBlock Text="Ajustes" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Button Style="{StaticResource IconBtn}" Background="Transparent" BorderBrush="Transparent" HorizontalAlignment="Right" Content="&#xE711;" Click="CloseSettings_Click"/>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,20,24" Focusable="False" FocusVisualStyle="{x:Null}">
+                        <StackPanel>
+                            <TextBlock Text="OVERLAY" Style="{StaticResource Caption}" Margin="0,12,0,12" Foreground="{StaticResource Gold}"/>
+                            <CheckBox x:Name="SetOverlay" Style="{StaticResource Switch}" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Mostrar overlay en el juego" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Ctrl+Shift+O lo muestra u oculta desde cualquier lado." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <TextBlock Text="Cuándo se ve" FontSize="13" FontWeight="SemiBold" Margin="0,18,0,8"/>
+                            <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="4" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="ModeAuto" Style="{StaticResource Segment}" GroupName="mode" Content="Solo con Fortnite abierto" Click="SettingChanged"/>
+                                    <RadioButton x:Name="ModeAlways" Style="{StaticResource Segment}" GroupName="mode" Content="Siempre" Click="SettingChanged"/>
+                                </StackPanel>
+                            </Border>
+                            <Grid Margin="0,18,0,0">
+                                <TextBlock Text="Tamaño" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="ScaleLabel" Text="100 %" Style="{StaticResource Sub}" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Slider x:Name="ScaleSlider" Minimum="85" Maximum="170" SmallChange="5" LargeChange="10" Margin="0,6,0,0" ValueChanged="Slider_Changed"/>
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock Text="Opacidad del fondo" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="OpacityLabel" Text="100 %" Style="{StaticResource Sub}" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Slider x:Name="OpacitySlider" Minimum="40" Maximum="100" SmallChange="5" LargeChange="10" Margin="0,6,0,0" ValueChanged="Slider_Changed"/>
+                            <TextBlock Text="Los números siempre se ven al 100 %: esto cambia solo el fondo. Más alto, más sólido." Style="{StaticResource Sub}" FontSize="11.5" Margin="0,6,0,0"/>
+                            <CheckBox x:Name="SetCompact" Style="{StaticResource Switch}" Margin="0,18,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Modo compacto" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Solo el total. Sesión, última y tesoros aparecen unos segundos al terminar cada partida." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <TextBlock Text="Qué muestra" FontSize="13" FontWeight="SemiBold" Margin="0,18,0,4"/>
+                            <CheckBox x:Name="ShowSession" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Cofres de la sesión" FontSize="13"/></CheckBox>
+                            <CheckBox x:Name="ShowLast" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Última partida / partida en curso" FontSize="13"/></CheckBox>
+                            <CheckBox x:Name="ShowTreasures" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Tesoros" FontSize="13"/></CheckBox>
+                            <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="14,12" Margin="0,12,0,0">
+                                <TextBlock Style="{StaticResource Sub}" FontSize="12">
+                                    <Run Text="Ctrl+Shift+L" Foreground="{StaticResource Text}" FontWeight="SemiBold"/><Run Text=" desbloquea el overlay para arrastrarlo; volvé a apretarlo para fijarlo. Fijado, el mouse lo atraviesa y no molesta al jugar."/>
+                                </TextBlock>
+                            </Border>
+
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,24"/>
+                            <TextBlock Text="GENERAL" Style="{StaticResource Caption}" Margin="0,0,0,12" Foreground="{StaticResource Gold}"/>
+                            <CheckBox x:Name="SetStartup" Style="{StaticResource Switch}" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Iniciar con Windows" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Arranca en la bandeja y cuenta todas tus partidas sin que te acuerdes de abrirlo." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox x:Name="SetCloseWithFortnite" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Abrir y cerrar junto con Fortnite" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Cuando cerrás Fortnite, Botín cuenta tu última partida y se cierra a los 30 s. Se abre solo la próxima vez que abras Fortnite." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox x:Name="SetTray" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Al cerrar, seguir en la bandeja" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="La X esconde la ventana; el contador y el overlay siguen andando." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox x:Name="SetLive" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Contar durante la partida" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Cuando Fortnite lo permite, muestra los cofres de la partida en curso." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,24"/>
+                            <TextBlock Text="REPLAYS Y DATOS" Style="{StaticResource Caption}" Margin="0,0,0,12" Foreground="{StaticResource Gold}"/>
+                            <TextBlock Text="Carpeta de replays" FontSize="13" FontWeight="SemiBold"/>
+                            <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="12,10" Margin="0,8,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="FolderText" Style="{StaticResource Sub}" FontSize="12" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Style="{StaticResource Btn}" Padding="10,5" Margin="10,0,0,0" Content="Cambiar" Click="ChooseFolder_Click"/>
+                                </Grid>
+                            </Border>
+                            <WrapPanel Margin="0,12,0,0">
+                                <Button Style="{StaticResource Btn}" Margin="0,0,8,8" Click="OpenData_Click" Content="Abrir carpeta de datos"/>
+                                <Button x:Name="ImportBtn" Style="{StaticResource Btn}" Margin="0,0,8,8" Click="Import_Click" Content="Importar de Chest Counter"/>
+                                <Button x:Name="UninstallCcBtn" Style="{StaticResource Btn}" Margin="0,0,8,8" Click="UninstallCc_Click" Content="Desinstalar Chest Counter"/>
+                            </WrapPanel>
+
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,16,0,20"/>
+                            <TextBlock Style="{StaticResource Sub}" FontSize="11.5" Foreground="{StaticResource Dim}"
+                                       Text="Botín 1.0 · Solo lee los archivos .replay que guarda Fortnite: no modifica el juego, no lee su memoria y no manda datos a ningún lado. Lector de replays basado en Fortnite Chest Counter (LED-N) y FortniteReplayDecompressor (Shiqan), ambos con licencia MIT."/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
