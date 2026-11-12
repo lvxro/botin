@@ -48,6 +48,14 @@ public partial class App : Application
 
         // Una sola instancia: si ya está abierta, la segunda le pide que se muestre y se cierra.
         _single = new Mutex(true, @"Local\Botin.Instance", out var first);
+        var updated = Array.IndexOf(e.Args, "--updated");
+        if (!first && updated >= 0 && updated + 1 < e.Args.Length && int.TryParse(e.Args[updated + 1], out var oldPid))
+        {
+            // Recién actualizado: la versión vieja todavía se está cerrando. Se espera a que suelte la instancia.
+            _single.Dispose();
+            try { Process.GetProcessById(oldPid).WaitForExit(20000); } catch { }
+            _single = new Mutex(true, @"Local\Botin.Instance", out first);
+        }
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Botin.Show");
         if (!first)
         {
@@ -150,7 +158,17 @@ public partial class App : Application
         }
 
         if (!e.Args.Contains("--tray")) ShowMain();
-        if (!e.Args.Contains("--shot")) EnsureWatcher();
+        if (!e.Args.Contains("--shot"))
+        {
+            EnsureWatcher();
+            Updater.CleanUp();
+            Updater.Found += () => Dispatcher.BeginInvoke(OnUpdateFound);
+            _updateTimer.Tick += (_, _) => CheckForUpdates();
+            _updateTimer.Start();
+            // Uso interno/soporte: --self-update busca la versión nueva y la instala sin esperar el clic.
+            if (e.Args.Contains("--self-update")) Updater.Found += () => Dispatcher.BeginInvoke(InstallUpdate);
+            _ = Task.Delay(TimeSpan.FromSeconds(e.Args.Contains("--self-update") ? 1 : 8)).ContinueWith(_ => Dispatcher.BeginInvoke(CheckForUpdates));
+        }
 
         // Modo de prueba: guarda capturas de la ventana y del overlay en una carpeta y se cierra.
         var shot = Array.IndexOf(e.Args, "--shot");
@@ -389,6 +407,72 @@ public partial class App : Application
         }
     }
 
+    // =============================== Actualizaciones ===============================
+
+    private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromHours(6) };
+    private Version? _notified;
+
+    /// <summary>El usuario dijo "ahora no" al aviso de versión nueva (hasta cerrar Botín).</summary>
+    public bool UpdateDismissed { get; set; }
+    /// <summary>null = sin actualizar; 0..1 = bajando; NaN = reemplazando y reiniciando.</summary>
+    public double? UpdateProgress { get; private set; }
+    public string? UpdateError { get; private set; }
+
+    public void CheckForUpdates()
+    {
+        if (Config.CheckUpdates && Updater.Available == null) _ = Updater.CheckAsync();
+    }
+
+    private void OnUpdateFound()
+    {
+        Refresh();
+        // Si Botín está solo en la bandeja, se avisa una vez con una notificación (nunca con Fortnite abierto).
+        if (Updater.Available is { } u && _notified != u.Version && !Window.IsVisible && !FortniteRunning && _tray != null)
+        {
+            _notified = u.Version;
+            _tray.ShowBalloonTip(10000, $"Botín {u.Version.ToString(3)} ya está disponible", "Abrí Botín y tocá Actualizar. Tus datos quedan como están.", WinForms.ToolTipIcon.Info);
+        }
+    }
+
+    public async void InstallUpdate()
+    {
+        if (Updater.Available is not { } info || UpdateProgress != null) return;
+        UpdateError = null;
+        UpdateProgress = 0;
+        Window.RenderUpdate();
+        try
+        {
+            var exe = await Updater.DownloadAndSwapAsync(info, new Progress<double>(p =>
+            {
+                UpdateProgress = p;
+                Window.RenderUpdate();
+            }));
+            UpdateProgress = double.NaN;
+            Window.RenderUpdate();
+
+            // El vigía corre con el exe viejo: se lo frena y la versión nueva lo vuelve a lanzar.
+            if (EventWaitHandle.TryOpenExisting(@"Local\Botin.WatchStop", out var stop))
+            {
+                stop.Set();
+                stop.Dispose();
+                for (var i = 0; i < 25 && Mutex.TryOpenExisting(@"Local\Botin.Watch", out var w); i++)
+                {
+                    w.Dispose();
+                    await Task.Delay(200);
+                }
+            }
+            Updater.Restart(exe);
+            Quit();
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Write("No se pudo actualizar", ex);
+            UpdateProgress = null;
+            UpdateError = ex is InvalidOperationException ? ex.Message : "No se pudo actualizar. Probá de nuevo.";
+            Window.RenderUpdate();
+        }
+    }
+
     // =============================== Overlay ===============================
 
     public void ApplyOverlay(bool preview = false)
@@ -515,6 +599,7 @@ public partial class App : Application
 
         _tray = new WinForms.NotifyIcon { Icon = icon, Text = "Botín", Visible = true, ContextMenuStrip = menu };
         _tray.MouseClick += (_, e) => { if (e.Button == WinForms.MouseButtons.Left) ShowMain(); };
+        _tray.BalloonTipClicked += (_, _) => ShowMain();
     }
 
     public void Quit()

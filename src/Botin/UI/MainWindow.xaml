@@ -665,7 +665,13 @@
                             <CheckBox x:Name="SetMap" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
                                 <StackPanel>
                                     <TextBlock Text="Bajar el mapa de la temporada" FontSize="13.5" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Imagen y nombres de los lugares, de fortnite-api.com. Es la única conexión de Botín a internet." Style="{StaticResource Sub}"/>
+                                    <TextBlock Text="Imagen y nombres de los lugares, de fortnite-api.com. No se manda ningún dato tuyo." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox x:Name="SetUpdates" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Avisarme si hay una versión nueva" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Se fija en GitHub al abrir. No se instala nada hasta que tocás Actualizar." Style="{StaticResource Sub}"/>
                                 </StackPanel>
                             </CheckBox>
                             <CheckBox x:Name="SetTray" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
@@ -701,8 +707,8 @@
                             </WrapPanel>
 
                             <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,16,0,20"/>
-                            <TextBlock Style="{StaticResource Sub}" FontSize="11.5" Foreground="{StaticResource Dim}"
-                                       Text="Botín 1.0 · Solo lee los archivos .replay que guarda Fortnite: no modifica el juego, no lee su memoria y no manda datos a ningún lado. Lector de replays basado en Fortnite Chest Counter (LED-N) y FortniteReplayDecompressor (Shiqan), ambos con licencia MIT."/>
+                            <TextBlock x:Name="AboutText" Style="{StaticResource Sub}" FontSize="11.5" Foreground="{StaticResource Dim}"
+                                       Text="Botín · Solo lee los archivos .replay que guarda Fortnite: no modifica el juego, no lee su memoria y no manda datos a ningún lado. Lector de replays basado en Fortnite Chest Counter (LED-N) y FortniteReplayDecompressor (Shiqan), ambos con licencia MIT."/>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

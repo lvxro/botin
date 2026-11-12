@@ -33,7 +33,10 @@ En **Ajustes** se cambian el tamaño, la opacidad del fondo y los datos que mues
 
 Solo lee los archivos `.replay` de `%LOCALAPPDATA%\FortniteGame\Saved\Demos`. No modifica el juego y no lee su memoria.
 
-La única conexión a internet es para bajar el **mapa de la temporada** (imagen y nombres de los lugares) de [fortnite-api.com](https://fortnite-api.com), una API pública. No se manda ningún dato tuyo. Se puede apagar en *Ajustes → Bajar el mapa de la temporada*.
+Se conecta a internet solo para dos cosas, y ninguna manda datos tuyos:
+
+- Bajar el **mapa de la temporada** (imagen y nombres de los lugares) de [fortnite-api.com](https://fortnite-api.com), una API pública. Se apaga en *Ajustes → Bajar el mapa de la temporada*.
+- Fijarse en las [Releases de GitHub](https://github.com/lvxro/botin/releases) si hay una **versión nueva**. Si hay, aparece un aviso y con un clic se baja, reemplaza a `Botin.exe` y se vuelve a abrir; tus datos quedan como están. No se instala nada sin que toques *Actualizar*. Se apaga en *Ajustes → Avisarme si hay una versión nueva*.
 
 La ubicación de cada cofre sale de tu posición en el replay en el momento de abrirlo. Las partidas cuyo replay ya no está en la PC no tienen ubicación.
 
@@ -42,6 +45,8 @@ Tus datos quedan en `%APPDATA%\Botin` (`data.json` es tu historial completo).
 ## Compilar
 
 Necesitás el SDK de .NET 10. Ejecutá `build.bat` y vas a tener `dist\Botin.exe` (un solo archivo, sin instalar nada).
+
+Para publicar una versión: subí `<Version>` en `src/Botin/Botin.csproj`, compilá y creá una Release con el tag `vX.Y.Z` (por ejemplo `v1.2.0`) adjuntando `dist\Botin.exe` con ese nombre. Las copias de Botín abiertas la detectan solas.
 
 ## Créditos
 

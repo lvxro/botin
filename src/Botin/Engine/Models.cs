@@ -115,8 +115,10 @@ public sealed class Config
     public bool CloseWithFortnite { get; set; }
     public bool CloseToTray { get; set; } = true;
     public bool LiveUpdate { get; set; } = true;
-    /// <summary>Bajar el mapa y los lugares de la temporada de fortnite-api.com (única conexión a internet).</summary>
+    /// <summary>Bajar el mapa y los lugares de la temporada de fortnite-api.com.</summary>
     public bool DownloadMap { get; set; } = true;
+    /// <summary>Consultar en GitHub si hay una versión nueva (no instala nada sin que el usuario toque Actualizar).</summary>
+    public bool CheckUpdates { get; set; } = true;
     public bool Imported { get; set; }
 }
 

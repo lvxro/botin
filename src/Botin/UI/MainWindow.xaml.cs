@@ -363,6 +363,38 @@ public partial class MainWindow : Window
         BannerBtn.Content = "Elegir carpeta";
         BannerBtn2.Visibility = Visibility.Collapsed;
         _ccBanner = false;
+        _updateBanner = false;
+        if (Updater.Available is { } u && (!_app.UpdateDismissed || _app.UpdateProgress != null))
+        {
+            _updateBanner = true;
+            Banner.Visibility = Visibility.Visible;
+            var v = u.Version.ToString(3);
+            BannerBtn.Visibility = Visibility.Visible;
+            BannerBtn2.Visibility = Visibility.Visible;
+            BannerBtn.IsEnabled = true;
+            if (_app.UpdateProgress is double p)
+            {
+                BannerTitle.Text = double.IsNaN(p) ? $"Instalando Botín {v}…" : $"Bajando Botín {v}… {p * 100:0} %";
+                BannerText.Text = "Botín se vuelve a abrir solo en unos segundos. Tus datos quedan como están.";
+                BannerBtn.Content = "Actualizando…";
+                BannerBtn.IsEnabled = false;
+                BannerBtn2.Visibility = Visibility.Collapsed;
+            }
+            else if (_app.UpdateError is { } err)
+            {
+                BannerTitle.Text = $"No se pudo actualizar a Botín {v}";
+                BannerText.Text = err;
+                BannerBtn.Content = "Reintentar";
+            }
+            else
+            {
+                BannerTitle.Text = $"Hay una versión nueva de Botín ({v})";
+                BannerText.Text = $"Tenés la {Updater.CurrentText}. Se actualiza en unos segundos y tus datos quedan como están.";
+                BannerBtn.Content = "Actualizar";
+            }
+            return;
+        }
+        BannerBtn.IsEnabled = true;
         if (s.State != TrackerState.NoFolder && _app.ChestCounter.Found && !_app.ChestCounterDismissed)
         {
             _ccBanner = true;
@@ -500,7 +532,9 @@ public partial class MainWindow : Window
         SetTray.IsChecked = c.CloseToTray;
         SetCloseWithFortnite.IsChecked = c.CloseWithFortnite;
         SetMap.IsChecked = c.DownloadMap;
+        SetUpdates.IsChecked = c.CheckUpdates;
         SetLive.IsChecked = c.LiveUpdate;
+        AboutText.Text = $"Botín {Updater.CurrentText} · Solo lee los archivos .replay que guarda Fortnite: no modifica el juego, no lee su memoria y no manda datos a ningún lado. Lector de replays basado en Fortnite Chest Counter (LED-N) y FortniteReplayDecompressor (Shiqan), ambos con licencia MIT.";
         FolderText.Text = c.DemosFolder;
         FolderText.ToolTip = c.DemosFolder;
         ImportBtn.Visibility = File.Exists(Store.ChestCounterData) ? Visibility.Visible : Visibility.Collapsed;
@@ -523,6 +557,12 @@ public partial class MainWindow : Window
         {
             c.DownloadMap = SetMap.IsChecked == true;
             if (c.DownloadMap) MapService.RefreshInBackground(force: true);
+        }
+        if (c.CheckUpdates != (SetUpdates.IsChecked == true))
+        {
+            c.CheckUpdates = SetUpdates.IsChecked == true;
+            _app.SaveConfig();
+            _app.CheckForUpdates();
         }
         if (c.StartWithWindows != (SetStartup.IsChecked == true) || c.CloseWithFortnite != (SetCloseWithFortnite.IsChecked == true))
         {
@@ -551,18 +591,26 @@ public partial class MainWindow : Window
         _app.ApplyOverlay(preview: true);
     }
 
-    private bool _ccBanner;
+    private bool _ccBanner, _updateBanner;
+
+    /// <summary>Repinta el aviso de actualización (progreso, error).</summary>
+    public void RenderUpdate()
+    {
+        if (_last != null) RenderBanner(_last);
+    }
 
     private void Banner_Click(object sender, RoutedEventArgs e)
     {
         if (_closing != null) _app.CancelAutoClose();
+        else if (_updateBanner) _app.InstallUpdate();
         else if (_ccBanner) UninstallCc_Click(sender, e);
         else ChooseFolder_Click(sender, e);
     }
 
     private void Banner2_Click(object sender, RoutedEventArgs e)
     {
-        _app.ChestCounterDismissed = true;
+        if (_updateBanner) _app.UpdateDismissed = true;
+        else _app.ChestCounterDismissed = true;
         if (_last != null) RenderBanner(_last);
     }
 
