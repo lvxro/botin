@@ -208,6 +208,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="16"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <Border Style="{StaticResource Card}">
@@ -348,8 +350,80 @@
                         </Grid>
                     </Border>
 
-                    <!-- Fila 3: historial + actividad -->
-                    <Border Grid.Row="4" Style="{StaticResource Card}" Padding="0">
+                    <!-- Fila 3: dónde saqueás -->
+                    <Border Grid.Row="4" Grid.ColumnSpan="3" Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.35*"/>
+                                <ColumnDefinition Width="28"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Grid>
+                                    <StackPanel>
+                                        <TextBlock Text="¿Dónde saqueás?" Style="{StaticResource CardTitle}"/>
+                                        <TextBlock x:Name="MapSub" Text="" Style="{StaticResource Sub}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="3" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton x:Name="MapHeat" Style="{StaticResource Segment}" GroupName="map" Content="Cofres" IsChecked="True" Click="MapMode_Click" ToolTip="Mapa de calor: todos los cofres que abriste"/>
+                                            <RadioButton x:Name="MapLand" Style="{StaticResource Segment}" GroupName="map" Content="Dónde caés" Click="MapMode_Click" ToolTip="Dónde abriste tu primer cofre en cada partida"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                                <ui:MapView x:Name="LootMap" Height="440" Margin="0,14,0,0"/>
+                                <TextBlock x:Name="MapNote" Style="{StaticResource Sub}" FontSize="11.5" Foreground="{StaticResource Dim}" Margin="0,8,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="DONDE MÁS SAQUEÁS" Style="{StaticResource Caption}" Margin="0,4,0,10"/>
+                                <ItemsControl x:Name="PlacesList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,10">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="{Binding NameBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,90,0"/>
+                                                <TextBlock HorizontalAlignment="Right" FontSize="12.5">
+                                                    <Run Text="{Binding Chests, Mode=OneWay}" FontWeight="SemiBold" Foreground="{StaticResource Gold}"/><Run Text="{Binding Detail, Mode=OneWay}" Foreground="{StaticResource Muted}"/>
+                                                </TextBlock>
+                                                <Border Grid.Row="1" Height="5" CornerRadius="3" Background="#1F2636" Margin="0,5,0,0">
+                                                    <Border CornerRadius="3" Background="{StaticResource Gold}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,8,0,16"/>
+                                <TextBlock Text="DÓNDE TE CONVIENE CAER" Style="{StaticResource Caption}" Margin="0,0,0,4"/>
+                                <TextBlock Text="Cofres que terminás abriendo según dónde caés" Style="{StaticResource Sub}" FontSize="11.5" Margin="0,0,0,10"/>
+                                <ItemsControl x:Name="LandingsList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="8" Padding="10,7" Margin="0,0,0,6" Background="{Binding Bg}">
+                                                <Grid>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,70,0"/>
+                                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource Sub}" FontSize="11.5"/>
+                                                    </StackPanel>
+                                                    <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Avg}" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="19" Foreground="{Binding AvgBrush}" HorizontalAlignment="Right"/>
+                                                        <TextBlock Text="prom." Style="{StaticResource Sub}" FontSize="10.5" HorizontalAlignment="Right" Margin="0,-3,0,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Fila 4: historial + actividad -->
+                    <Border Grid.Row="6" Style="{StaticResource Card}" Padding="0">
                         <StackPanel>
                             <Grid Margin="20,18,20,12">
                                 <StackPanel>
@@ -421,6 +495,11 @@
                                                     <TextBlock Text="{Binding DetailMeta}" Style="{StaticResource Sub}" FontSize="12" HorizontalAlignment="Right"/>
                                                 </Grid>
                                                 <ui:MatchTimeline Match="{Binding Match}" Margin="0,6,0,0"/>
+                                                <StackPanel Visibility="{Binding RouteVisibility}" Margin="0,12,0,0">
+                                                    <TextBlock Text="TU RECORRIDO" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                                                    <ui:MapView RouteMatch="{Binding Match}" Height="380"/>
+                                                    <TextBlock Text="Línea azul: tu recorrido desde que aterrizaste · puntos dorados: cofres · punto rojo: dónde terminó la partida" Style="{StaticResource Sub}" FontSize="11" Margin="0,6,0,0"/>
+                                                </StackPanel>
                                                 <Grid Margin="0,10,0,0">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -484,7 +563,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top">
+                    <Border Grid.Row="6" Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top">
                         <StackPanel>
                             <TextBlock Text="Actividad" Style="{StaticResource CardTitle}"/>
                             <TextBlock x:Name="ActivityEmpty" Text="Acá vas a ver cada partida que se cuenta." Style="{StaticResource Sub}" Margin="0,8,0,0"/>
@@ -581,6 +660,12 @@
                                 <StackPanel>
                                     <TextBlock Text="Abrir y cerrar junto con Fortnite" FontSize="13.5" FontWeight="SemiBold"/>
                                     <TextBlock Text="Cuando cerrás Fortnite, Botín cuenta tu última partida y se cierra a los 30 s. Se abre solo la próxima vez que abras Fortnite." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox x:Name="SetMap" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Bajar el mapa de la temporada" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Imagen y nombres de los lugares, de fortnite-api.com. Es la única conexión de Botín a internet." Style="{StaticResource Sub}"/>
                                 </StackPanel>
                             </CheckBox>
                             <CheckBox x:Name="SetTray" Style="{StaticResource Switch}" Margin="0,16,0,0" Click="SettingChanged">

@@ -83,6 +83,7 @@ public sealed class Snapshot
     /// <summary>Cofres por día (últimos 30 días con partidas).</summary>
     public IReadOnlyList<ChartPoint> Daily { get; init; } = Array.Empty<ChartPoint>();
     public LootCurve Curve { get; init; } = new();
+    public LootPlaces Places { get; init; } = new();
 
     public static string ColorKey(string kind) => ChestKinds.Canonical(kind) switch
     {
@@ -180,6 +181,7 @@ public sealed class Snapshot
                 Chart = chart,
                 Daily = daily,
                 Curve = LootCurve.Build(matches),
+                Places = LootPlaces.Build(matches),
                 Types = types,
                 Rows = rows,
                 Activity = t.Activity,

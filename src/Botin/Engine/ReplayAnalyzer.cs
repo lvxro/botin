@@ -106,6 +106,9 @@ public sealed class ReplayAnalyzer : FortniteReplayReader.ReplayReader
     private readonly HashSet<uint> _prizeChannelsSeen = new();
     private readonly HashSet<uint> _equipChannelsSeen = new();
     private readonly Dictionary<uint, uint> _pawnToPlayerState = new();
+
+    /// <summary>Posiciones de cada pawn (id de actor) en el tiempo, para ubicar los cofres en el mapa.</summary>
+    private readonly Dictionary<uint, List<(float T, float X, float Y)>> _pawnTrack = new();
     private readonly Dictionary<uint, int> _playerStateToPlayerId = new();
 
     // Treasure prize handler abilities ("GA_TreasureHandler_*"): class netguid -> name.
@@ -116,7 +119,7 @@ public sealed class ReplayAnalyzer : FortniteReplayReader.ReplayReader
     private readonly List<GrantEvent> _grants = new();
 
     /// <summary>Bump when the analysis changes so that existing replays are re-analyzed.</summary>
-    public const int CurrentVersion = 15;
+    public const int CurrentVersion = 16;
 
     private static readonly bool ProbeDebug = Environment.GetEnvironmentVariable("CHESTCOUNTER_DEBUG") == "4";
 
@@ -505,11 +508,23 @@ public sealed class ReplayAnalyzer : FortniteReplayReader.ReplayReader
                 }
                 break;
 
-            case PlayerPawn pawn when pawn.PlayerState is uint ps && ps != 0:
+            case PlayerPawn pawn:
                 var pawnId = Channels[channelIndex]?.ActorId;
-                if (pawnId != null)
+                if (pawnId != null && pawn.PlayerState is uint ps && ps != 0)
                 {
                     _pawnToPlayerState[pawnId.Value] = ps;
+                }
+                if (pawnId != null && pawn.ReplicatedMovement?.Location is { } loc)
+                {
+                    if (!_pawnTrack.TryGetValue(pawnId.Value, out var track))
+                    {
+                        _pawnTrack[pawnId.Value] = track = new List<(float, float, float)>();
+                    }
+                    // Una muestra cada medio segundo alcanza (a pie se recorren ~3 m) y mantiene la memoria baja.
+                    if (track.Count == 0 || Now - track[^1].T >= 0.5f)
+                    {
+                        track.Add((Now, (float)loc.X, (float)loc.Y));
+                    }
                 }
                 break;
 
@@ -594,7 +609,7 @@ public sealed class ReplayAnalyzer : FortniteReplayReader.ReplayReader
         var interactions = _searches
             .Where(s => s.SearcherPawn is uint p && targetPawns.Contains(p) && (!s.Stale || StableKey(s.ActorKey)))
             .OrderBy(s => s.Time)
-            .Select(s => (s.Time, Kind: ChestKinds.Classify(s.Label), s.Label, s.ActorKey, s.Destroyed))
+            .Select(s => (s.Time, Kind: ChestKinds.Classify(s.Label), s.Label, s.ActorKey, s.Destroyed, Pawn: s.SearcherPawn))
             .ToList();
 
         var chests = new List<ChestRecord>();
@@ -620,6 +635,8 @@ public sealed class ReplayAnalyzer : FortniteReplayReader.ReplayReader
                 Destroyed = search.Destroyed,
                 Items = items,
                 TreasureItems = items.Where(i => TreasureItem.IsMatch(i) && !EventItem.IsMatch(i)).ToList(),
+                X = PositionAt(search.Pawn, search.Time)?.X,
+                Y = PositionAt(search.Pawn, search.Time)?.Y,
             });
         }
 
@@ -874,7 +891,49 @@ public sealed class ReplayAnalyzer : FortniteReplayReader.ReplayReader
             Chests = chests,
             TreasureFinds = finds,
             TeamTreasureFinds = teamFinds,
+            Path = BuildPath(targetPawns),
         };
+    }
+
+    /// <summary>Posición de un pawn en ese segundo: la muestra más cercana, si no está a más de 5 s.</summary>
+    private (float X, float Y)? PositionAt(uint? pawn, float time)
+    {
+        if (pawn is not uint p || !_pawnTrack.TryGetValue(p, out var track) || track.Count == 0)
+        {
+            return null;
+        }
+        var lo = 0;
+        var hi = track.Count - 1;
+        while (lo < hi)
+        {
+            var mid = (lo + hi) / 2;
+            if (track[mid].T < time) lo = mid + 1; else hi = mid;
+        }
+        var best = track[lo];
+        if (lo > 0 && Math.Abs(track[lo - 1].T - time) < Math.Abs(best.T - time))
+        {
+            best = track[lo - 1];
+        }
+        return Math.Abs(best.T - time) <= 5 ? (MathF.Round(best.X), MathF.Round(best.Y)) : null;
+    }
+
+    /// <summary>Recorrido del jugador seguido (todos sus pawns, por si reapareció), un punto cada ~5 s.</summary>
+    private List<int[]>? BuildPath(HashSet<uint> targetPawns)
+    {
+        var samples = targetPawns.Where(_pawnTrack.ContainsKey).SelectMany(p => _pawnTrack[p]).OrderBy(s => s.T).ToList();
+        if (samples.Count == 0)
+        {
+            return null;
+        }
+        var path = new List<int[]>();
+        foreach (var s in samples)
+        {
+            if (path.Count == 0 || s.T - path[^1][0] >= 5)
+            {
+                path.Add(new[] { (int)s.T, (int)s.X, (int)s.Y });
+            }
+        }
+        return path;
     }
 }
 

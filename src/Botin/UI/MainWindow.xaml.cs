@@ -104,6 +104,7 @@ public partial class MainWindow : Window
         }
 
         RenderCurve(s.Curve);
+        RenderPlaces(s.Places);
 
         if (s.Best is { } best)
         {
@@ -145,6 +146,7 @@ public partial class MainWindow : Window
             OthersText = OthersText(r.Match),
             NoTreasureVisibility = r.Match.TreasureFinds.Count == 0 ? Visibility.Visible : Visibility.Collapsed,
             TreasureItems = r.Match.TreasureFinds.Select(f => new { Name = f.DisplayName, Where = TreasureWhere(f) }).ToList(),
+            RouteVisibility = r.Match.Chests.Any(c => c.X.HasValue) || r.Match.Path is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed,
         }).ToList();
         MoreBtn.Visibility = s.Rows.Count > 12 ? Visibility.Visible : Visibility.Collapsed;
         MoreBtn.Content = _showAll ? "Ver menos" : $"Ver las {s.Rows.Count} partidas";
@@ -183,6 +185,53 @@ public partial class MainWindow : Window
         text.Text = flat ? "= promedio" : $"{(up ? "▲ +" : "▼ −")}{Pretty.N(Math.Abs(d), Math.Abs(d) < 10 ? 1 : 0)}{(suffix.Length > 0 ? " " + suffix : "")}";
         text.Foreground = flat ? Res("Muted") : up ? Res("Green") : Res("Red");
         chip.Background = flat ? Res("Surface2") : up ? Res("UpBg") : Res("DownBg");
+    }
+
+    private void RenderPlaces(LootPlaces p)
+    {
+        if (MapLand.IsChecked == true)
+        {
+            LootMap.SetLandings(p.Landings.Select(l => (l.X, l.Y, l.Times)).ToList());
+        }
+        else
+        {
+            LootMap.SetHeat(p.Points);
+        }
+
+        MapSub.Text = p.MatchesWithPosition == 0
+            ? "Se arma con tus próximas partidas"
+            : $"{Pretty.N(p.Points.Count)} cofres en {p.MatchesWithPosition} {(p.MatchesWithPosition == 1 ? "partida" : "partidas")}";
+        var missing = p.MatchesTotal - p.MatchesWithPosition;
+        MapNote.Text = (missing > 0 ? $"{missing} partidas más viejas no tienen ubicación (su replay ya no está en la PC). " : "")
+            + (MapService.HasImage ? "Mapa: fortnite-api.com" : _app.Config.DownloadMap ? "Bajando el mapa de la temporada…" : "Activá \"Bajar el mapa de la temporada\" en Ajustes para ver el mapa.");
+
+        var named = p.Places.Where(x => x.Name != LootPlaces.Outskirts).ToList();
+        var maxChests = Math.Max(1, named.Count > 0 ? named.Max(x => x.Chests) : 1);
+        PlacesList.ItemsSource = p.Places.Take(7).Select(x => new
+        {
+            x.Name,
+            Chests = Pretty.N(x.Chests),
+            Detail = $" en {x.Matches} {(x.Matches == 1 ? "partida" : "partidas")}",
+            Ratio = x.Name == LootPlaces.Outskirts ? 0.0 : (double)x.Chests / maxChests,
+            NameBrush = x.Name == LootPlaces.Outskirts ? Res("Muted") : Res("Text"),
+        }).ToList();
+
+        // Mejor lugar para caer: el de mayor promedio entre los que probaste al menos 2 veces.
+        var candidates = p.Landings.Where(l => l.Times >= 2 && l.Name != LootPlaces.Outskirts).ToList();
+        var best = candidates.Count > 0 ? candidates.MaxBy(l => l.AvgChests) : null;
+        LandingsList.ItemsSource = p.Landings.Take(6).Select(l => new
+        {
+            l.Name,
+            Detail = $"caíste {l.Times} {(l.Times == 1 ? "vez" : "veces")} · récord {l.Best}" + (ReferenceEquals(l, best) ? " · tu mejor lugar" : ""),
+            Avg = Pretty.N(l.AvgChests, 0),
+            AvgBrush = ReferenceEquals(l, best) ? Res("Gold") : Res("Text"),
+            Bg = ReferenceEquals(l, best) ? (Brush)new SolidColorBrush(Color.FromArgb(0x1C, 0xF7, 0xB9, 0x3E)) : Res("Surface2"),
+        }).ToList();
+    }
+
+    private void MapMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (_last != null) RenderPlaces(_last.Places);
     }
 
     private void RenderCurve(LootCurve c)
@@ -245,7 +294,7 @@ public partial class MainWindow : Window
     /// <summary>Modo de captura: abre el detalle de la partida más reciente con tesoros y elige el gráfico.</summary>
     public void PrepareShot(bool byDay)
     {
-        if (_last?.Rows.FirstOrDefault(r => r.Treasures > 0) is { } r) _expanded.Add(r.Match.SessionId);
+        if (_last?.Rows.FirstOrDefault(r => r.Match.Path != null) is { } r) _expanded.Add(r.Match.SessionId);
         ByDay.IsChecked = byDay;
         ByMatch.IsChecked = !byDay;
         if (_last != null) Render(_last);
@@ -450,6 +499,7 @@ public partial class MainWindow : Window
         SetStartup.IsChecked = c.StartWithWindows;
         SetTray.IsChecked = c.CloseToTray;
         SetCloseWithFortnite.IsChecked = c.CloseWithFortnite;
+        SetMap.IsChecked = c.DownloadMap;
         SetLive.IsChecked = c.LiveUpdate;
         FolderText.Text = c.DemosFolder;
         FolderText.ToolTip = c.DemosFolder;
@@ -469,6 +519,11 @@ public partial class MainWindow : Window
         c.OverlayCompact = SetCompact.IsChecked == true;
         c.CloseToTray = SetTray.IsChecked == true;
         c.LiveUpdate = SetLive.IsChecked == true;
+        if (c.DownloadMap != (SetMap.IsChecked == true))
+        {
+            c.DownloadMap = SetMap.IsChecked == true;
+            if (c.DownloadMap) MapService.RefreshInBackground(force: true);
+        }
         if (c.StartWithWindows != (SetStartup.IsChecked == true) || c.CloseWithFortnite != (SetCloseWithFortnite.IsChecked == true))
         {
             c.StartWithWindows = SetStartup.IsChecked == true;

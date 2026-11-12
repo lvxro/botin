@@ -90,6 +90,10 @@ public partial class App : Application
             Config.OverlayLookVersion = 3;
         }
 
+        MapService.Init(Store.Folder);
+        MapService.Updated += QueueRefresh;
+        if (Config.DownloadMap) MapService.RefreshInBackground();
+
         var data = Store.LoadData();
         Tracker = new Tracker(Store, Config, data);
 
@@ -158,6 +162,7 @@ public partial class App : Application
         Directory.CreateDirectory(dir);
         await Task.Delay(1500);
         while (Tracker.Progress != null) await Task.Delay(500);
+        for (var i = 0; i < 40 && (MapService.Pois.Count == 0 || !MapService.HasImage); i++) await Task.Delay(500);
         await Task.Delay(1500);
         Refresh();
         Overlay.Show();

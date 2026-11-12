@@ -10,7 +10,8 @@ Contador de cofres de Fortnite. **Una sola app**: el contador, las estadísticas
   - total, sesión, última partida y tesoros, con tendencia contra tu promedio (▲/▼);
   - gráfico de cofres **por partida** o **por día**;
   - **¿Cuándo saqueás?**: cofres por minuto desde que aterrizás, sumando todas tus partidas, con un consejo según tu forma de jugar;
-  - récord, tipos de cofre e historial. Al hacer clic en una partida se abre su **línea de tiempo**: cada cofre en su minuto y de qué cofre salió cada tesoro.
+  - **¿Dónde saqueás?**: mapa de calor de tus cofres sobre el mapa de la temporada, los lugares donde más saqueás y en cuáles te conviene caer (cuántos cofres terminás abriendo según dónde caés);
+  - récord, tipos de cofre e historial. Al hacer clic en una partida se abre su **línea de tiempo** (cada cofre en su minuto y de qué cofre salió cada tesoro) y **tu recorrido en el mapa**.
 - Queda en la **bandeja** (al lado del reloj) y puede **iniciar con Windows**.
 - Opcional: **abrir y cerrar junto con Fortnite**. Cuando cerrás el juego, Botín cuenta tu última partida y se cierra; vuelve a abrirse solo con Fortnite.
 - Si tenías **Fortnite Chest Counter**, trae tu historial solo y te ofrece desinstalarlo (va a la papelera).
@@ -30,7 +31,11 @@ En **Ajustes** se cambian el tamaño, la opacidad del fondo y los datos que mues
 
 ## Es seguro
 
-Solo lee los archivos `.replay` de `%LOCALAPPDATA%\FortniteGame\Saved\Demos`. No modifica el juego, no lee su memoria y no se conecta a internet.
+Solo lee los archivos `.replay` de `%LOCALAPPDATA%\FortniteGame\Saved\Demos`. No modifica el juego y no lee su memoria.
+
+La única conexión a internet es para bajar el **mapa de la temporada** (imagen y nombres de los lugares) de [fortnite-api.com](https://fortnite-api.com), una API pública. No se manda ningún dato tuyo. Se puede apagar en *Ajustes → Bajar el mapa de la temporada*.
+
+La ubicación de cada cofre sale de tu posición en el replay en el momento de abrirlo. Las partidas cuyo replay ya no está en la PC no tienen ubicación.
 
 Tus datos quedan en `%APPDATA%\Botin` (`data.json` es tu historial completo).
 

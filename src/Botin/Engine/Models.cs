@@ -13,6 +13,9 @@ public sealed class ChestRecord
     public bool Destroyed { get; set; }
     public List<string> Items { get; set; } = new();
     public List<string> TreasureItems { get; set; } = new();
+    /// <summary>Posición en el mundo del juego (la del jugador al abrirlo: queda a pocos metros del cofre). Null en partidas viejas.</summary>
+    public float? X { get; set; }
+    public float? Y { get; set; }
 }
 
 public sealed class TreasureFind
@@ -61,6 +64,8 @@ public sealed class MatchRecord
     public List<ChestRecord> Chests { get; set; } = new();
     public List<TreasureFind> TreasureFinds { get; set; } = new();
     public List<TreasureFind> TeamTreasureFinds { get; set; } = new();
+    /// <summary>Recorrido del jugador: [segundo, x, y] cada ~5 s, en coordenadas del mundo. Null en partidas viejas.</summary>
+    public List<int[]>? Path { get; set; }
 
     /// <summary>Inicio de la partida en UTC.</summary>
     [JsonIgnore]
@@ -110,6 +115,8 @@ public sealed class Config
     public bool CloseWithFortnite { get; set; }
     public bool CloseToTray { get; set; } = true;
     public bool LiveUpdate { get; set; } = true;
+    /// <summary>Bajar el mapa y los lugares de la temporada de fortnite-api.com (única conexión a internet).</summary>
+    public bool DownloadMap { get; set; } = true;
     public bool Imported { get; set; }
 }
 
