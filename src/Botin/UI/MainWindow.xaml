@@ -228,11 +228,17 @@
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton x:Name="ByMatch" Style="{StaticResource Segment}" GroupName="chart" Content="Por partida" IsChecked="True" Click="ChartMode_Click" ToolTip="Cada barra es una partida"/>
                                         <RadioButton x:Name="ByDay" Style="{StaticResource Segment}" GroupName="chart" Content="Por día" Click="ChartMode_Click" ToolTip="Cada barra suma los cofres de un día"/>
+                                        <RadioButton x:Name="ByTime" Style="{StaticResource Segment}" GroupName="chart" Content="Tiempo" Click="ChartMode_Click" ToolTip="Cuánto jugaste cada día"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
                             <ui:BarChart x:Name="Chart" Grid.Row="1" MinHeight="230" Margin="0,16,0,0"/>
-                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+                            <WrapPanel x:Name="TimeSummary" Grid.Row="2" Margin="0,10,0,0" Visibility="Collapsed">
+                                <TextBlock Style="{StaticResource Sub}" Margin="0,0,18,0"><Run Text="Hoy " /><Run x:Name="PlayTodayText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
+                                <TextBlock Style="{StaticResource Sub}" Margin="0,0,18,0"><Run Text="Últimos 7 días " /><Run x:Name="PlayWeekText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
+                                <TextBlock Style="{StaticResource Sub}"><Run Text="Sesión más larga " /><Run x:Name="PlayLongestText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
+                            </WrapPanel>
+                            <StackPanel x:Name="ChartLegend" Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
                                 <Rectangle Width="14" Height="2" VerticalAlignment="Center" StrokeDashArray="2 2" Stroke="{StaticResource Muted}"/>
                                 <TextBlock Text="promedio" Style="{StaticResource Sub}" Margin="6,0,16,0"/>
                                 <TextBlock Text="★" Foreground="{StaticResource Purple}" VerticalAlignment="Center"/>

@@ -40,10 +40,56 @@ public static class Pretty
         if (local > today.AddDays(-6)) return local.ToString("dddd HH:mm", L.Culture) is var s ? char.ToUpper(s[0]) + s[1..] : "";
         return local.ToString("dd MMM · HH:mm", L.Culture);
     }
+
+    /// <summary>135 → "2 h 15 min", 120 → "2 h", 45 → "45 min".</summary>
+    public static string Minutes(double minutes)
+    {
+        var m = (int)Math.Round(minutes);
+        if (m < 60) return $"{m} min";
+        return m % 60 == 0 ? $"{m / 60} h" : $"{m / 60} h {m % 60} min";
+    }
+}
+
+/// <summary>
+/// Una sesión de juego: partidas seguidas con menos de 30 min entre el final de una y el comienzo de la siguiente.
+/// Va desde que empieza la primera hasta que termina la última, así que incluye el lobby y las colas entre partidas.
+/// </summary>
+public sealed record PlaySession(DateTime StartUtc, DateTime EndUtc, int Matches)
+{
+    public static readonly TimeSpan Gap = TimeSpan.FromMinutes(30);
+
+    public double Minutes => (EndUtc - StartUtc).TotalMinutes;
+    /// <summary>Día al que se cuenta (el de su comienzo: una noche que pasa de las 0 h sigue siendo esa noche).</summary>
+    public DateTime Day => StartUtc.ToLocalTime().Date;
+
+    public static List<PlaySession> Build(IEnumerable<MatchRecord> matches)
+    {
+        var list = new List<PlaySession>();
+        DateTime? start = null, end = null;
+        var n = 0;
+        foreach (var m in matches.OrderBy(m => m.When))
+        {
+            var s = m.When;
+            var e = s.AddSeconds(Math.Max(60, m.DurationSeconds ?? 0));
+            if (start != null && s - end!.Value <= Gap)
+            {
+                if (e > end) end = e;
+                n++;
+                continue;
+            }
+            if (start != null) list.Add(new PlaySession(start.Value, end!.Value, n));
+            start = s;
+            end = e;
+            n = 1;
+        }
+        if (start != null) list.Add(new PlaySession(start.Value, end!.Value, n));
+        return list;
+    }
 }
 
 public sealed record ChestTypeSlice(string Name, int Count, string ColorKey);
-public sealed record ChartPoint(int Chests, int Treasures, string Label, bool Live, bool Record = false, string? Axis = null);
+/// <summary>Una barra: cofres (o minutos, en el gráfico de tiempo).</summary>
+public sealed record ChartPoint(int Value, int Treasures, string Label, bool Live, bool Record = false, string? Axis = null);
 
 public sealed record MatchRow(
     string When, string Mode, string Place, bool Win, string Kills, int Chests, double ChestsRatio,
@@ -82,6 +128,13 @@ public sealed class Snapshot
     public IReadOnlyList<ChartPoint> Chart { get; init; } = Array.Empty<ChartPoint>();
     /// <summary>Cofres por día (últimos 30 días con partidas).</summary>
     public IReadOnlyList<ChartPoint> Daily { get; init; } = Array.Empty<ChartPoint>();
+    /// <summary>Minutos jugados por día (últimos 30 días con partidas).</summary>
+    public IReadOnlyList<ChartPoint> PlayDaily { get; init; } = Array.Empty<ChartPoint>();
+    public double PlayToday { get; init; }
+    public double PlayWeek { get; init; }
+    /// <summary>Minutos de la sesión de juego en curso (o la última de hoy), con la partida en curso si la hay.</summary>
+    public double PlaySessionNow { get; init; }
+    public PlaySession? LongestSession { get; init; }
     public LootCurve Curve { get; init; } = new();
     public LootPlaces Places { get; init; } = new();
 
@@ -135,6 +188,37 @@ public sealed class Snapshot
                 return new ChartPoint(chests, g.Sum(m => m.TreasureFinds.Count), $"{label} · {n} {(n == 1 ? "partida" : "partidas")}", false, ReferenceEquals(g, bestDay), g.Key.ToString("ddd d", L.Culture));
             }).ToList();
 
+            var sessions = PlaySession.Build(matches);
+            var now = DateTime.UtcNow;
+            // La partida en curso estira la sesión actual (o abre una nueva) hasta ahora.
+            var liveStart = t.InMatch ? now.AddSeconds(-(live?.DurationSeconds ?? 0)) : (DateTime?)null;
+            if (liveStart is DateTime ls)
+            {
+                if (sessions.Count > 0 && ls - sessions[^1].EndUtc <= PlaySession.Gap)
+                {
+                    sessions[^1] = sessions[^1] with { EndUtc = now, Matches = sessions[^1].Matches + 1 };
+                }
+                else
+                {
+                    sessions.Add(new PlaySession(ls, now, 1));
+                }
+            }
+            var playDays = sessions.GroupBy(x => x.Day).OrderBy(g => g.Key).TakeLast(30).ToList();
+            var longestDay = playDays.Count == 0 ? null : playDays.MaxBy(g => g.Sum(x => x.Minutes));
+            var playDaily = playDays.Select(g =>
+            {
+                var label = g.Key.ToString("dddd d MMM", L.Culture);
+                label = char.ToUpper(label[0]) + label[1..];
+                var ns = g.Count();
+                var nm = g.Sum(x => x.Matches);
+                var spans = string.Join(", ", g.Take(3).Select(x => $"{x.StartUtc.ToLocalTime():HH:mm}–{x.EndUtc.ToLocalTime():HH:mm}")) + (ns > 3 ? "…" : "");
+                return new ChartPoint((int)Math.Round(g.Sum(x => x.Minutes)), 0,
+                    $"{label} · {nm} {(nm == 1 ? "partida" : "partidas")} · {(ns == 1 ? "de" : $"{ns} sesiones:")} {spans}",
+                    t.InMatch && g.Key == DateTime.Today, ReferenceEquals(g, longestDay) && playDays.Count > 1, g.Key.ToString("ddd d", L.Culture));
+            }).ToList();
+            var weekStart = DateTime.Today.AddDays(-6);
+            var playNow = sessions.LastOrDefault(x => now - x.EndUtc <= PlaySession.Gap || x.Day == DateTime.Today);
+
             var types = matches.SelectMany(m => m.Chests)
                 .GroupBy(ch => ChestKinds.Canonical(ch.Kind))
                 .Select(g => new ChestTypeSlice(L.Name(g.Key), g.Count(), ColorKey(g.Key)))
@@ -180,6 +264,11 @@ public sealed class Snapshot
                 ChestsPerTreasure = treasures > 0 ? (int)Math.Round((double)total / treasures) : null,
                 Chart = chart,
                 Daily = daily,
+                PlayDaily = playDaily,
+                PlayToday = sessions.Where(x => x.Day == DateTime.Today).Sum(x => x.Minutes),
+                PlayWeek = sessions.Where(x => x.Day >= weekStart).Sum(x => x.Minutes),
+                PlaySessionNow = playNow?.Minutes ?? 0,
+                LongestSession = sessions.MaxBy(x => x.Minutes),
                 Curve = LootCurve.Build(matches),
                 Places = LootPlaces.Build(matches),
                 Types = types,

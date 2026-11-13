@@ -62,7 +62,8 @@ public partial class MainWindow : Window
         if (s.RecentAverage is double ra) SetTrend(HeroTrend, HeroTrendText, ra - s.Average, "/ partida");
         SessionSub.Text = s.SessionMatches == 0
             ? $"desde las {Snapshot.SessionStartUtc.ToLocalTime():HH:mm}"
-            : $"{s.SessionMatches} {(s.SessionMatches == 1 ? "partida" : "partidas")} · prom. {Pretty.N((double)s.SessionChests / s.SessionMatches, 1)}";
+            : $"{s.SessionMatches} {(s.SessionMatches == 1 ? "partida" : "partidas")} · prom. {Pretty.N((double)s.SessionChests / s.SessionMatches, 1)}"
+              + (s.PlaySessionNow >= 1 ? $" · {Pretty.Minutes(s.PlaySessionNow)}" : "");
 
         if (s.Last is { } last)
         {
@@ -85,7 +86,21 @@ public partial class MainWindow : Window
         DataArea.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
         if (empty) return;
 
-        if (ByDay.IsChecked == true)
+        var timeMode = ByTime.IsChecked == true;
+        TimeSummary.Visibility = timeMode ? Visibility.Visible : Visibility.Collapsed;
+        ChartLegend.Visibility = timeMode ? Visibility.Collapsed : Visibility.Visible;
+        if (timeMode)
+        {
+            Chart.SetData(s.PlayDaily, time: true);
+            ChartTitle.Text = "Tiempo de juego";
+            ChartSub.Text = "Por día, de la primera partida a la última de cada sesión (con el lobby entre partidas)";
+            PlayTodayText.Text = s.PlayToday > 0 ? Pretty.Minutes(s.PlayToday) : "nada todavía";
+            PlayWeekText.Text = Pretty.Minutes(s.PlayWeek);
+            PlayLongestText.Text = s.LongestSession is { } ls
+                ? $"{Pretty.Minutes(ls.Minutes)} ({ls.StartUtc.ToLocalTime().ToString("d MMM", L.Culture)}, {ls.Matches} partidas)"
+                : "–";
+        }
+        else if (ByDay.IsChecked == true)
         {
             Chart.SetData(s.Daily);
             ChartTitle.Text = "Cofres por día";
@@ -292,11 +307,12 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Modo de captura: abre el detalle de la partida más reciente con tesoros y elige el gráfico.</summary>
-    public void PrepareShot(bool byDay)
+    public void PrepareShot(bool byDay, bool time = false)
     {
         if (_last?.Rows.FirstOrDefault(r => r.Match.Path != null) is { } r) _expanded.Add(r.Match.SessionId);
-        ByDay.IsChecked = byDay;
-        ByMatch.IsChecked = !byDay;
+        ByTime.IsChecked = time;
+        ByDay.IsChecked = byDay && !time;
+        ByMatch.IsChecked = !byDay && !time;
         if (_last != null) Render(_last);
     }
 

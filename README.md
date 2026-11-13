@@ -8,7 +8,7 @@ Contador de cofres de Fortnite. **Una sola app**: el contador, las estadísticas
 - **Overlay** sobre el juego: total, sesión, última partida (o partida en curso) y tesoros. Al terminar cada partida, el total cuenta hacia arriba y aparece un resumen: cofres, tesoros, puesto y si fue récord.
 - **Ventana principal** con todo junto:
   - total, sesión, última partida y tesoros, con tendencia contra tu promedio (▲/▼);
-  - gráfico de cofres **por partida** o **por día**;
+  - gráfico de cofres **por partida** o **por día**, y **tiempo de juego** por día (sesión más larga, hoy y últimos 7 días);
   - **¿Cuándo saqueás?**: cofres por minuto desde que aterrizás, sumando todas tus partidas, con un consejo según tu forma de jugar;
   - **¿Dónde saqueás?**: mapa de calor de tus cofres sobre el mapa de la temporada, los lugares donde más saqueás y en cuáles te conviene caer (cuántos cofres terminás abriendo según dónde caés);
   - récord, tipos de cofre e historial. Al hacer clic en una partida se abre su **línea de tiempo** (cada cofre en su minuto y de qué cofre salió cada tesoro) y **tu recorrido en el mapa**.

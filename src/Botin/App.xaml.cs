@@ -203,6 +203,12 @@ public partial class App : Application
         {
             Save(inner2, Path.Combine(dir, "detail.png"));
         }
+        Window.PrepareShot(byDay: false, time: true);
+        await Task.Delay(800);
+        if (Window.FindName("Scroller") is System.Windows.Controls.ScrollViewer sv3 && sv3.Content is FrameworkElement inner3)
+        {
+            Save(inner3, Path.Combine(dir, "time.png"));
+        }
         Window.FindName("SettingsLayer");
         Quit();
 

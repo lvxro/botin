@@ -35,11 +35,22 @@ public sealed class BarChart : FrameworkElement
         Cursor = Cursors.Arrow;
     }
 
-    public void SetData(IReadOnlyList<ChartPoint> points)
+    /// <summary>Los valores son minutos jugados (ejes y textos en horas) en lugar de cofres.</summary>
+    private bool _time;
+
+    public void SetData(IReadOnlyList<ChartPoint> points, bool time = false)
     {
         _points = points;
+        _time = time;
         InvalidateVisual();
     }
+
+    private string Fmt(double v) => _time ? Pretty.Minutes(v) : Pretty.N(v);
+
+    private string Axis(int v) => !_time ? Pretty.N(v) : v % 60 == 0 ? $"{v / 60} h" : $"{v / 60}:{v % 60:00}";
+
+    /// <summary>Paso del eje para minutos: 15 o 30 min, o horas enteras.</summary>
+    private static int TimeStep(int max) => new[] { 15, 30, 60, 120, 180, 240, 360 }.FirstOrDefault(s => max / s <= 5, 480);
 
     private const double AxisW = 38;
     private double BottomH => _points.Any(p => p.Axis != null) ? 24 : 6;
@@ -96,15 +107,15 @@ public sealed class BarChart : FrameworkElement
             return;
         }
 
-        var max = Math.Max(5, _points.Max(p => p.Chests));
-        var step = NiceStep(max);
+        var max = Math.Max(_time ? 30 : 5, _points.Max(p => p.Value));
+        var step = _time ? TimeStep(max) : NiceStep(max);
         var top = (int)Math.Ceiling(max / (double)step) * step;
 
         for (var v = 0; v <= top; v += step)
         {
             var y = Math.Round(plot.Bottom - v / (double)top * plot.Height) + 0.5;
             dc.DrawLine(GridPen, new Point(plot.Left, y), new Point(plot.Right, y));
-            var lt = Text(Pretty.N(v), 10.5, Muted, NumFace);
+            var lt = Text(Axis(v), 10.5, Muted, NumFace);
             dc.DrawText(lt, new Point(AxisW - 8 - lt.Width, y - lt.Height / 2));
         }
 
@@ -127,7 +138,7 @@ public sealed class BarChart : FrameworkElement
         for (var i = 0; i < _points.Count; i++)
         {
             var p = _points[i];
-            var h = Math.Max(p.Chests / (double)top * plot.Height, 3);
+            var h = Math.Max(p.Value / (double)top * plot.Height, 3);
             var x = plot.Left + i * slot + (slot - barW) / 2;
             var r = new Rect(x, plot.Bottom - h, barW, h);
             var brush = p.Live ? LiveBrush : (_hover == -1 || _hover == i ? BarBrush : BarDim);
@@ -147,7 +158,7 @@ public sealed class BarChart : FrameworkElement
             // Valor escrito solo donde importa: tu récord y la última partida.
             if ((p.Record || i == lastFinished || p.Live) && _hover == -1)
             {
-                var v = Text(Pretty.N(p.Chests), 11.5, p.Live ? LiveBrush : p.Record ? GoldText : MutedLight, NumFace);
+                var v = Text(_time ? (p.Value < 60 ? $"{p.Value} min" : $"{p.Value / 60} h {p.Value % 60:00}") : Pretty.N(p.Value), 11.5, p.Live ? LiveBrush : p.Record ? GoldText : MutedLight, NumFace);
                 labelTop -= v.Height;
                 dc.DrawText(v, new Point(x + (barW - v.Width) / 2, labelTop));
             }
@@ -155,10 +166,10 @@ public sealed class BarChart : FrameworkElement
 
         if (finished.Count > 1)
         {
-            var avg = finished.Average(p => p.Chests);
+            var avg = finished.Average(p => p.Value);
             var y = Math.Round(plot.Bottom - avg / top * plot.Height) + 0.5;
             dc.DrawLine(AvgPen, new Point(plot.Left, y), new Point(plot.Right, y));
-            var al = Text($"prom. {Pretty.N(avg, 1)}", 10.5, MutedLight, NumFace);
+            var al = Text($"prom. {(_time ? Pretty.Minutes(avg) : Pretty.N(avg, 1))}", 10.5, MutedLight, NumFace);
             var bg = new Rect(plot.Right - al.Width - 10, y - al.Height / 2 - 1, al.Width + 8, al.Height + 2);
             dc.DrawRoundedRectangle(Frozen(new SolidColorBrush(Color.FromRgb(0x12, 0x17, 0x22))), null, bg, 4, 4);
             dc.DrawText(al, new Point(bg.Left + 4, bg.Top + 1));
@@ -167,7 +178,9 @@ public sealed class BarChart : FrameworkElement
         if (_hover >= 0 && _hover < _points.Count)
         {
             var p = _points[_hover];
-            var title = Text($"{p.Chests} {(p.Chests == 1 ? "cofre" : "cofres")}" + (p.Treasures > 0 ? $"  ★ {p.Treasures}" : "") + (p.Record ? "  · récord" : ""), 13, TextBrush);
+            var title = Text(_time
+                ? $"{Fmt(p.Value)} jugando" + (p.Live ? "  · en curso" : p.Record ? "  · tu día más largo" : "")
+                : $"{p.Value} {(p.Value == 1 ? "cofre" : "cofres")}" + (p.Treasures > 0 ? $"  ★ {p.Treasures}" : "") + (p.Record ? "  · récord" : ""), 13, TextBrush);
             var sub = Text(p.Label, 11, Muted);
             var w = Math.Max(title.Width, sub.Width) + 20;
             var hgt = title.Height + sub.Height + 14;
