@@ -11,6 +11,7 @@ Contador de cofres de Fortnite. **Una sola app**: el contador, las estadísticas
   - gráfico de cofres **por partida** o **por día**, y **tiempo de juego** por día (sesión más larga, hoy y últimos 7 días);
   - **¿Cuándo saqueás?**: cofres por minuto desde que aterrizás, sumando todas tus partidas, con un consejo según tu forma de jugar;
   - **¿Dónde saqueás?**: mapa de calor de tus cofres sobre el mapa de la temporada, los lugares donde más saqueás y en cuáles te conviene caer (cuántos cofres terminás abriendo según dónde caés);
+  - **chance acumulada del token de la tienda pirata** con los cofres de la temporada (1 en 137.500 por cofre, según Epic);
   - récord, tipos de cofre e historial. Al hacer clic en una partida se abre su **línea de tiempo** (cada cofre en su minuto y de qué cofre salió cada tesoro) y **tu recorrido en el mapa**.
 - Queda en la **bandeja** (al lado del reloj) y puede **iniciar con Windows**.
 - Opcional: **abrir y cerrar junto con Fortnite**. Cuando cerrás el juego, Botín cuenta tu última partida y se cierra; vuelve a abrirse solo con Fortnite.

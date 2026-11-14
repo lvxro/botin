@@ -88,6 +88,31 @@ public sealed record PlaySession(DateTime StartUtc, DateTime EndUtc, int Matches
 }
 
 public sealed record ChestTypeSlice(string Name, int Count, string ColorKey);
+/// <summary>
+/// Token de la tienda pirata: Epic publicó que sale en 1 de cada 137.500 cofres (más durante las Treasure Hours).
+/// Cada cofre es un sorteo aparte; la chance acumulada es la de que te haya salido al menos una vez esta temporada.
+/// </summary>
+public static class TokenOdds
+{
+    public const int OneIn = 137_500;
+    private const double PerChest = 1.0 / OneIn;
+
+    public static double Chance(int chests) => 1 - Math.Pow(1 - PerChest, chests);
+
+    /// <summary>Cofres para llegar a una chance acumulada <paramref name="p"/> (0–1).</summary>
+    public static int ChestsFor(double p) => (int)Math.Ceiling(Math.Log(1 - p) / Math.Log(1 - PerChest));
+
+    /// <summary>"++Fortnite+Release-43.10" → 43: la temporada es la versión mayor.</summary>
+    public static int? Season(string? version)
+    {
+        if (version == null) return null;
+        var i = version.LastIndexOf('-');
+        var s = i >= 0 ? version[(i + 1)..] : version;
+        var dot = s.IndexOf('.');
+        return int.TryParse(dot > 0 ? s[..dot] : s, out var major) ? major : null;
+    }
+}
+
 /// <summary>Una barra: cofres (o minutos, en el gráfico de tiempo).</summary>
 public sealed record ChartPoint(int Value, int Treasures, string Label, bool Live, bool Record = false, string? Axis = null);
 
@@ -135,6 +160,8 @@ public sealed class Snapshot
     /// <summary>Minutos de la sesión de juego en curso (o la última de hoy), con la partida en curso si la hay.</summary>
     public double PlaySessionNow { get; init; }
     public PlaySession? LongestSession { get; init; }
+    /// <summary>Cofres de esta temporada (con la partida en curso), para la chance del token.</summary>
+    public int SeasonChests { get; init; }
     public LootCurve Curve { get; init; } = new();
     public LootPlaces Places { get; init; } = new();
 
@@ -269,6 +296,7 @@ public sealed class Snapshot
                 PlayWeek = sessions.Where(x => x.Day >= weekStart).Sum(x => x.Minutes),
                 PlaySessionNow = playNow?.Minutes ?? 0,
                 LongestSession = sessions.MaxBy(x => x.Minutes),
+                SeasonChests = SeasonChestCount(matches) + (liveChests ?? 0),
                 Curve = LootCurve.Build(matches),
                 Places = LootPlaces.Build(matches),
                 Types = types,
@@ -276,6 +304,13 @@ public sealed class Snapshot
                 Activity = t.Activity,
             };
         }
+    }
+
+    /// <summary>Cofres de la temporada más nueva que aparece en tus partidas (las partidas sin versión no cuentan).</summary>
+    private static int SeasonChestCount(IReadOnlyList<MatchRecord> matches)
+    {
+        var season = matches.Select(m => TokenOdds.Season(m.GameVersion)).Max();
+        return season == null ? 0 : matches.Where(m => TokenOdds.Season(m.GameVersion) == season).Sum(m => m.ChestsOpened);
     }
 
     public static string Csv(TrackerData d)

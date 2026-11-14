@@ -295,6 +295,19 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,8,0,18"/>
+
+                            <TextBlock Text="Token de la tienda pirata" Style="{StaticResource CardTitle}" FontSize="13.5"
+                                       ToolTip="Epic publicó que sale en 1 de cada 137.500 cofres (más en las Treasure Hours). Cada cofre es un sorteo aparte: esto es la chance de que te haya salido al menos una vez con los cofres que abriste esta temporada."/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock x:Name="TokenText" Text="0 %" FontFamily="{StaticResource NumFont}" FontWeight="SemiBold" FontSize="26" Foreground="{StaticResource Purple}"/>
+                                <TextBlock Text="de chance acumulada" Style="{StaticResource Sub}" VerticalAlignment="Bottom" Margin="8,0,0,5"/>
+                            </StackPanel>
+                            <Border Height="6" CornerRadius="3" Background="#1F2636" Margin="0,8,0,0">
+                                <Border CornerRadius="3" Background="{StaticResource Purple}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform x:Name="TokenBar" ScaleX="0"/></Border.RenderTransform></Border>
+                            </Border>
+                            <TextBlock x:Name="TokenSub" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,8,0,0"/>
                         </StackPanel>
                     </Border>
 

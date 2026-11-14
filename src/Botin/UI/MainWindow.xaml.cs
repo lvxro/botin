@@ -130,6 +130,13 @@ public partial class MainWindow : Window
         TodayText.Text = Pretty.N(s.Today);
         WinsText.Text = Pretty.N(s.Wins);
 
+        var token = TokenOdds.Chance(s.SeasonChests);
+        TokenText.Text = $"{Pretty.N(token * 100, token < 0.1 ? 1 : 0)} %";
+        TokenBar.ScaleX = Math.Clamp(token, 0, 1);
+        var half = TokenOdds.ChestsFor(0.5);
+        TokenSub.Text = $"{Pretty.N(s.SeasonChests)} cofres esta temporada · 1 en {Pretty.N(TokenOdds.OneIn)} por cofre (dato de Epic)."
+            + (s.SeasonChests < half ? $" El 50 % llega a los {Pretty.N(half)} cofres: te faltan {Pretty.N(half - s.SeasonChests)}." : "");
+
         var maxType = Math.Max(1, s.Types.Count > 0 ? s.Types.Max(t => t.Count) : 1);
         TypesList.ItemsSource = s.Types.Select(t => new
         {
