@@ -236,7 +236,8 @@
                             <WrapPanel x:Name="TimeSummary" Grid.Row="2" Margin="0,10,0,0" Visibility="Collapsed">
                                 <TextBlock Style="{StaticResource Sub}" Margin="0,0,18,0"><Run Text="Hoy " /><Run x:Name="PlayTodayText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
                                 <TextBlock Style="{StaticResource Sub}" Margin="0,0,18,0"><Run Text="Últimos 7 días " /><Run x:Name="PlayWeekText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
-                                <TextBlock Style="{StaticResource Sub}"><Run Text="Sesión más larga " /><Run x:Name="PlayLongestText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
+                                <TextBlock Style="{StaticResource Sub}" Margin="0,0,18,0"><Run Text="Sesión más larga " /><Run x:Name="PlayLongestText" Foreground="{StaticResource Text}" FontWeight="SemiBold"/></TextBlock>
+                                <TextBlock Style="{StaticResource Sub}" ToolTip="Cofres por hora jugada, contando el lobby entre partidas. Solo días con al menos 1 h de juego."><Run Text="Mejor ritmo " /><Run x:Name="PlayBestRateText" Foreground="{StaticResource GoldText}" FontWeight="SemiBold"/></TextBlock>
                             </WrapPanel>
                             <StackPanel x:Name="ChartLegend" Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
                                 <Rectangle Width="14" Height="2" VerticalAlignment="Center" StrokeDashArray="2 2" Stroke="{StaticResource Muted}"/>

@@ -63,7 +63,8 @@ public partial class MainWindow : Window
         SessionSub.Text = s.SessionMatches == 0
             ? $"desde las {Snapshot.SessionStartUtc.ToLocalTime():HH:mm}"
             : $"{s.SessionMatches} {(s.SessionMatches == 1 ? "partida" : "partidas")} · prom. {Pretty.N((double)s.SessionChests / s.SessionMatches, 1)}"
-              + (s.PlaySessionNow >= 1 ? $" · {Pretty.Minutes(s.PlaySessionNow)}" : "");
+              + (s.PlaySessionNow >= 1 ? $" · {Pretty.Minutes(s.PlaySessionNow)}" : "")
+              + (s.RateSession is double rs ? $" · {Pretty.N(rs)}/h" : "");
 
         if (s.Last is { } last)
         {
@@ -94,8 +95,11 @@ public partial class MainWindow : Window
             Chart.SetData(s.PlayDaily, time: true);
             ChartTitle.Text = "Tiempo de juego";
             ChartSub.Text = "Por día, de la primera partida a la última de cada sesión (con el lobby entre partidas)";
-            PlayTodayText.Text = s.PlayToday > 0 ? Pretty.Minutes(s.PlayToday) : "nada todavía";
-            PlayWeekText.Text = Pretty.Minutes(s.PlayWeek);
+            PlayTodayText.Text = s.PlayToday > 0 ? Pretty.Minutes(s.PlayToday) + Rate(s.RateToday) : "nada todavía";
+            PlayWeekText.Text = Pretty.Minutes(s.PlayWeek) + Rate(s.RateWeek);
+            PlayBestRateText.Text = s.BestRateDay is { } bestRate
+                ? $"{Pretty.N(bestRate.Rate)} cofres/h ({bestRate.Day.ToString("d MMM", L.Culture)})"
+                : "–";
             PlayLongestText.Text = s.LongestSession is { } ls
                 ? $"{Pretty.Minutes(ls.Minutes)} ({ls.StartUtc.ToLocalTime().ToString("d MMM", L.Culture)}, {ls.Matches} partidas)"
                 : "–";
@@ -450,6 +454,9 @@ public partial class MainWindow : Window
     }
 
     private static Brush Res(string key) => (Brush)Application.Current.FindResource(key);
+
+    /// <summary>" · 230 cofres/h" (o nada si se jugó muy poco para que el número diga algo).</summary>
+    private static string Rate(double? perHour) => perHour is double r ? $" · {Pretty.N(r)} cofres/h" : "";
 
     private static Brush TypeBrush(string key) => key switch
     {
