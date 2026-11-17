@@ -107,7 +107,10 @@ public sealed class Config
     /// <summary>Versión del diseño del overlay con la que se guardaron estos ajustes (para migrarlos una vez).</summary>
     public int OverlayLookVersion { get; set; }
     public bool OverlayShowSession { get; set; } = true;
-    public bool OverlayShowLast { get; set; } = true;
+    /// <summary>Anillo con los cofres del día de juego contra la meta del día.</summary>
+    public bool OverlayShowGoal { get; set; } = true;
+    /// <summary>Meta de cofres por día de juego. Null = automática (tu día típico).</summary>
+    public int? DailyGoal { get; set; }
     public bool OverlayShowTreasures { get; set; } = true;
 
     public bool StartWithWindows { get; set; }

@@ -5,22 +5,34 @@
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         FontFamily="{StaticResource UiFont}" UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display">
+    <!--
+        Overlay de Botín. Una sola pastilla, lo más quieta posible mientras jugás:
+        anillo de la meta del día (con el cofre al centro, o un punto rojo que late durante la partida),
+        el total y, al lado, la sesión y los tesoros. Al terminar una partida aparece debajo el "momento":
+        los cofres de esa partida suben, el récord brilla y después se actualizan el total y el anillo.
+        Los colores salen de la paleta (UI/Palette.cs); los degradés llevan los mismos valores en hex.
+    -->
     <Window.Resources>
-        <Style x:Key="Lbl" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="9"/>
-            <Setter Property="FontWeight" Value="Bold"/>
+        <Style x:Key="Cap" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10.5"/>
             <Setter Property="Foreground" Value="{StaticResource Dim}"/>
+            <Setter Property="Margin" Value="0,1,0,0"/>
         </Style>
-        <Style x:Key="Val" TargetType="TextBlock">
+        <Style x:Key="Stat" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource NumFont}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="19"/>
             <Setter Property="Foreground" Value="{StaticResource Text}"/>
-            <Setter Property="Margin" Value="0,0,0,-3"/>
+            <Setter Property="Margin" Value="0,-2,0,-2"/>
+        </Style>
+        <Style x:Key="Divider" TargetType="Rectangle">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Margin" Value="14,9,14,9"/>
+            <Setter Property="Fill" Value="#1CFFFFFF"/>
         </Style>
     </Window.Resources>
 
-    <Grid x:Name="Root" Margin="8">
+    <Grid x:Name="Root" Margin="10">
         <Grid.LayoutTransform>
             <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1"/>
         </Grid.LayoutTransform>
@@ -30,74 +42,81 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ============ Barra principal ============ -->
-        <Grid>
-            <Border x:Name="Card" CornerRadius="11" BorderThickness="1">
-                <Border.BorderBrush><SolidColorBrush Color="#2EFFFFFF"/></Border.BorderBrush>
+        <!-- ============ Pastilla ============ -->
+        <Grid x:Name="Pill" HorizontalAlignment="Left">
+            <Border x:Name="Card" CornerRadius="18" BorderThickness="1">
+                <Border.BorderBrush><SolidColorBrush Color="#1FFFFFFF"/></Border.BorderBrush>
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#FA131926" Offset="0"/>
-                        <GradientStop Color="#F7090E18" Offset="1"/>
+                        <GradientStop Color="#F5161D2B" Offset="0"/>
+                        <GradientStop Color="#F20B1019" Offset="1"/>
                     </LinearGradientBrush>
                 </Border.Background>
                 <Border.Effect>
-                    <DropShadowEffect x:Name="CardShadow" BlurRadius="12" ShadowDepth="1" Opacity="0.6" Color="Black"/>
+                    <DropShadowEffect x:Name="CardShadow" BlurRadius="16" ShadowDepth="2" Opacity="0.55" Color="Black"/>
                 </Border.Effect>
                 <Grid>
-                    <!-- Acento dorado a la izquierda -->
-                    <Border Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="6,9,0,9" CornerRadius="2">
+                    <!-- Filo de luz arriba, como un vidrio -->
+                    <Border x:Name="Sheen" Height="1" VerticalAlignment="Top" Margin="18,0">
                         <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#FFDA7C" Offset="0"/>
-                                <GradientStop Color="#EE9E10" Offset="1"/>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                <GradientStop Color="#38FFFFFF" Offset="0.5"/>
+                                <GradientStop Color="#00FFFFFF" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
                     </Border>
 
-                    <StackPanel x:Name="Content" Orientation="Horizontal" Margin="14,6,14,7">
-                        <!-- Total -->
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="COFRES" Style="{StaticResource Lbl}" Foreground="{StaticResource GoldLabel}"/>
-                            <Grid>
-                                <TextBlock x:Name="Total" Text="0" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="29"
-                                           Foreground="{StaticResource GoldText}" Margin="0,-3,0,-4" RenderTransformOrigin="0,0.5">
+                    <StackPanel x:Name="Content" Orientation="Horizontal" Margin="7,7,18,7">
+                        <!-- Anillo de la meta -->
+                        <Grid x:Name="RingBlock" Width="44" Height="44" Margin="0,0,11,0" VerticalAlignment="Center">
+                            <Ellipse x:Name="RingTrack" Stroke="{StaticResource SurfaceHover}" StrokeThickness="4"/>
+                            <Path x:Name="RingArc" Stroke="{StaticResource Gold}" StrokeThickness="4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <Ellipse x:Name="RingGlow" Stroke="{StaticResource Gold}" StrokeThickness="4" Opacity="0" IsHitTestVisible="False">
+                                <Ellipse.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#FCBB39" Opacity="1"/></Ellipse.Effect>
+                            </Ellipse>
+                            <Image x:Name="RingIcon" Source="{StaticResource ChestIcon}" Width="26" Height="26" Margin="0,1,0,0"/>
+                            <!-- Durante la partida: una insignia roja que late en la esquina del anillo; el cofre queda -->
+                            <Grid x:Name="LiveDot" Width="11" Height="11" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0" Visibility="Collapsed">
+                                <Ellipse x:Name="LiveHalo" Fill="{StaticResource Red}" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform><ScaleTransform x:Name="LiveHaloScale"/></Ellipse.RenderTransform>
+                                </Ellipse>
+                                <Ellipse Fill="{StaticResource Red}" Stroke="#F20B1019" StrokeThickness="2"/>
+                            </Grid>
+                        </Grid>
+
+                        <!-- Total y avance del día -->
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,2,0">
+                            <!-- Punto rojo de respaldo, si el anillo está apagado -->
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="LiveDotInline" Width="7" Height="7" Fill="{StaticResource Red}" Margin="1,0,7,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                <TextBlock x:Name="Total" Text="0" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="28"
+                                           Foreground="{StaticResource GoldText}" Margin="0,-5,0,-4" RenderTransformOrigin="0,0.5">
                                     <TextBlock.RenderTransform><ScaleTransform x:Name="TotalScale"/></TextBlock.RenderTransform>
                                 </TextBlock>
-                            </Grid>
+                            </StackPanel>
+                            <TextBlock x:Name="GoalLine" Style="{StaticResource Cap}" Margin="1,1,0,0">
+                                <Run x:Name="GoalNow" Text="0" Foreground="{StaticResource Muted}"/><Run x:Name="GoalSep" Text=" / "/><Run x:Name="GoalTarget" Text="0"/><Run x:Name="GoalSuffix" Text=" hoy"/>
+                            </TextBlock>
                         </StackPanel>
 
                         <StackPanel x:Name="SessionBlock" Orientation="Horizontal">
-                            <Rectangle Width="1" Margin="12,5,11,5" Fill="#1FFFFFFF"/>
+                            <Rectangle Style="{StaticResource Divider}"/>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="SESIÓN" Style="{StaticResource Lbl}"/>
-                                <TextBlock x:Name="Session" Text="0" Style="{StaticResource Val}"/>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <StackPanel x:Name="LastBlock" Orientation="Horizontal">
-                            <Rectangle Width="1" Margin="11,5,11,5" Fill="#1FFFFFFF"/>
-                            <StackPanel VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <Grid x:Name="LiveDot" Width="7" Height="7" Margin="0,0,5,0" VerticalAlignment="Center" Visibility="Collapsed">
-                                        <Ellipse x:Name="LiveHalo" Fill="{StaticResource Red}" RenderTransformOrigin="0.5,0.5">
-                                            <Ellipse.RenderTransform><ScaleTransform x:Name="LiveHaloScale"/></Ellipse.RenderTransform>
-                                        </Ellipse>
-                                        <Ellipse Fill="{StaticResource Red}"/>
-                                    </Grid>
-                                    <TextBlock x:Name="LastLabel" Text="ÚLTIMA" Style="{StaticResource Lbl}"/>
-                                </StackPanel>
-                                <TextBlock x:Name="Last" Text="–" Style="{StaticResource Val}"/>
+                                <TextBlock x:Name="Session" Text="0" Style="{StaticResource Stat}"/>
+                                <TextBlock Text="sesión" Style="{StaticResource Cap}"/>
                             </StackPanel>
                         </StackPanel>
 
                         <StackPanel x:Name="TreasureBlock" Orientation="Horizontal">
-                            <Rectangle Width="1" Margin="11,5,11,5" Fill="#1FFFFFFF"/>
+                            <Rectangle Style="{StaticResource Divider}"/>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="TESOROS" Style="{StaticResource Lbl}"/>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="★" FontSize="12.5" Foreground="{StaticResource Purple}" VerticalAlignment="Center" Margin="0,1,3,0"/>
-                                    <TextBlock x:Name="Treasures" Text="0" Style="{StaticResource Val}" Foreground="{StaticResource Purple}"/>
+                                    <TextBlock Text="★" FontSize="12" Foreground="{StaticResource Purple}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock x:Name="Treasures" Text="0" Style="{StaticResource Stat}" Foreground="{StaticResource Purple}"/>
                                 </StackPanel>
+                                <TextBlock Text="tesoros" Style="{StaticResource Cap}"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -105,57 +124,76 @@
             </Border>
 
             <!-- Brillo dorado del borde cuando se suma una partida -->
-            <Border x:Name="Glow" CornerRadius="11" BorderThickness="2" BorderBrush="{StaticResource Gold}" Opacity="0" IsHitTestVisible="False">
+            <Border x:Name="Glow" CornerRadius="18" BorderThickness="1.5" BorderBrush="{StaticResource Gold}" Opacity="0" IsHitTestVisible="False">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="22" ShadowDepth="0" Color="#FCBB39" Opacity="0.9"/>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="0" Color="#FCBB39" Opacity="0.85"/>
                 </Border.Effect>
             </Border>
 
-            <Rectangle x:Name="MoveFrame" RadiusX="11" RadiusY="11" Stroke="{StaticResource Gold}" StrokeThickness="2" StrokeDashArray="4 3"
+            <Rectangle x:Name="MoveFrame" RadiusX="18" RadiusY="18" Stroke="{StaticResource Gold}" StrokeThickness="2" StrokeDashArray="4 3"
                        IsHitTestVisible="False" Visibility="Collapsed"/>
         </Grid>
 
-        <!-- ============ Resumen al terminar la partida ============ -->
-        <Border x:Name="Summary" Grid.Row="1" Margin="0,6,0,0" CornerRadius="10" BorderThickness="1" BorderBrush="#4DFCBB39"
-                HorizontalAlignment="Left" Padding="12,7,14,8" Opacity="0" Visibility="Collapsed">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#FA2A1C07" Offset="0"/>
-                    <GradientStop Color="#F7131926" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.55" Color="Black"/>
-            </Border.Effect>
-            <Border.RenderTransform><TranslateTransform x:Name="SummaryShift"/></Border.RenderTransform>
-            <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="SummaryTitle" Text="PARTIDA TERMINADA" Style="{StaticResource Lbl}" Foreground="{StaticResource GoldLabel}"/>
-                    <TextBlock x:Name="SummaryPlace" Text="" Style="{StaticResource Lbl}" Margin="8,0,0,0"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                    <TextBlock x:Name="SummaryChests" Text="+0" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="22"
-                               Foreground="{StaticResource GoldText}" VerticalAlignment="Bottom"/>
-                    <TextBlock x:Name="SummaryChestsLabel" Text="cofres" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource GoldLight}"
-                               VerticalAlignment="Bottom" Margin="6,0,0,4"/>
-                    <StackPanel x:Name="SummaryTreasureBlock" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Ellipse Width="4" Height="4" Fill="{StaticResource Line}" Margin="12,0,12,10" VerticalAlignment="Bottom"/>
-                        <TextBlock x:Name="SummaryTreasures" Text="★ +1" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="19"
-                                   Foreground="{StaticResource Purple}" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
-                        <TextBlock x:Name="SummaryTreasuresLabel" Text="tesoro" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Purple}"
-                                   VerticalAlignment="Bottom" Margin="6,0,0,4"/>
-                    </StackPanel>
-                    <StackPanel x:Name="SummaryRecordBlock" Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Ellipse Width="4" Height="4" Fill="{StaticResource Line}" Margin="12,0,12,10" VerticalAlignment="Bottom"/>
-                        <Border CornerRadius="6" Background="{StaticResource Gold}" Padding="7,2" Margin="0,0,0,4" VerticalAlignment="Bottom">
-                            <TextBlock Text="¡RÉCORD!" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource GoldInk}"/>
-                        </Border>
-                    </StackPanel>
-                </StackPanel>
-            </StackPanel>
-        </Border>
+        <!-- ============ Momento: al terminar la partida ============ -->
+        <Grid x:Name="Summary" Grid.Row="1" Margin="0,7,0,0" HorizontalAlignment="Stretch" MinWidth="250" Opacity="0" Visibility="Collapsed">
+            <Grid.RenderTransform><TranslateTransform x:Name="SummaryShift"/></Grid.RenderTransform>
+            <Border x:Name="SummaryCard" CornerRadius="18" BorderThickness="1">
+                <Border.BorderBrush><SolidColorBrush x:Name="SummaryBorder" Color="#3DFCBB39"/></Border.BorderBrush>
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#F72A1C07" Offset="0"/>
+                        <GradientStop Color="#F5161D2B" Offset="0.55"/>
+                        <GradientStop Color="#F20B1019" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.55" Color="Black"/>
+                </Border.Effect>
+                <Grid x:Name="SummaryInner" SizeChanged="SummaryInner_SizeChanged">
+                    <!-- Destello que cruza la tarjeta cuando es récord -->
+                    <Rectangle x:Name="Shine" Width="90" HorizontalAlignment="Left" IsHitTestVisible="False" Opacity="0">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00FFE7A8" Offset="0"/>
+                                <GradientStop Color="#4DFFE7A8" Offset="0.5"/>
+                                <GradientStop Color="#00FFE7A8" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                        <Rectangle.RenderTransform>
+                            <TransformGroup>
+                                <SkewTransform AngleX="-20"/>
+                                <TranslateTransform x:Name="ShineShift" X="-120"/>
+                            </TransformGroup>
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
 
-        <Border x:Name="MoveHint" Grid.Row="2" Margin="0,8,0,0" CornerRadius="8" Background="#E6FCBB39" Padding="10,5"
+                    <StackPanel Margin="18,12,18,13">
+                        <Grid>
+                            <TextBlock x:Name="SummaryTitle" Text="Puesto #3 · 16 min" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                            <Border x:Name="RecordBadge" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="7" Padding="8,2,8,3" Margin="16,0,0,0"
+                                    Background="{StaticResource Gold}" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                                <Border.RenderTransform><ScaleTransform x:Name="BadgeScale"/></Border.RenderTransform>
+                                <TextBlock Text="NUEVO RÉCORD" FontSize="10" FontWeight="Bold" Foreground="{StaticResource GoldInk}"/>
+                            </Border>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock x:Name="SummaryChests" Text="+0" FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="40"
+                                       Foreground="{StaticResource GoldText}" Margin="-1,-4,0,-6"/>
+                            <TextBlock x:Name="SummaryChestsLabel" Text="cofres" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource GoldLight}"
+                                       VerticalAlignment="Bottom" Margin="8,0,0,4"/>
+                        </StackPanel>
+                        <TextBlock x:Name="SummaryFacts" FontSize="11.5" Foreground="{StaticResource Dim}" Margin="0,6,0,0" TextWrapping="NoWrap"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <Border x:Name="SummaryGlow" CornerRadius="18" BorderThickness="1.5" BorderBrush="{StaticResource Gold}" Opacity="0" IsHitTestVisible="False">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="26" ShadowDepth="0" Color="#FCBB39" Opacity="0.9"/>
+                </Border.Effect>
+            </Border>
+        </Grid>
+
+        <Border x:Name="MoveHint" Grid.Row="2" Margin="0,8,0,0" CornerRadius="9" Background="#E6FCBB39" Padding="10,5"
                 HorizontalAlignment="Left" Visibility="Collapsed">
             <TextBlock Foreground="{StaticResource GoldInk}" FontSize="11.5" FontWeight="SemiBold"
                        Text="Arrastrá para mover · doble clic o Ctrl+Shift+L para fijar"/>

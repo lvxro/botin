@@ -5,7 +5,8 @@ Contador de cofres de Fortnite. **Una sola app**: el contador, las estadísticas
 ## Qué hace
 
 - Lee los replays que Fortnite guarda al terminar cada partida y suma los cofres que abriste, más los **tesoros** de la búsqueda del tesoro.
-- **Overlay** sobre el juego: total, sesión, última partida (o partida en curso) y tesoros. Al terminar cada partida, el total cuenta hacia arriba y aparece un resumen: cofres, tesoros, puesto y si fue récord.
+- **Overlay** sobre el juego: una pastilla con el total, la sesión, los tesoros y un **anillo con la meta del día**. Durante la partida, el anillo lleva un punto rojo que late. Al terminar cada partida aparece el **momento**: los cofres de esa partida suben, el récord brilla y después se actualizan el total y el anillo.
+- **Meta del día**: un día de juego termina cuando dejás de jugar 5 horas, así una noche que pasa las 12 cuenta como un solo día. La meta automática es tu día típico (la mediana de tus últimos 7); también la podés elegir en Ajustes.
 - **Ventana principal** con un menú lateral de tres secciones:
   - **Inicio**: total, sesión, última partida y tesoros, con tendencia contra tu promedio (▲/▼); gráfico de cofres **por partida** o **por día**, y **tiempo de juego** por día con tu **ritmo en cofres por hora** (hoy, últimos 7 días, sesión y mejor día); récord, tipos de cofre y la **chance acumulada del token de la tienda pirata** con los cofres de la temporada (1 en 137.500 por cofre, según Epic);
   - **Partidas**: el historial y la actividad. Al hacer clic en una partida se abre su **línea de tiempo** (cada cofre en su minuto y de qué cofre salió cada tesoro) y **tu recorrido en el mapa**;

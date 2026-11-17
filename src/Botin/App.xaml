@@ -36,37 +36,109 @@
         <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
         <FontFamily x:Key="NumFont">Bahnschrift</FontFamily>
 
-        <!-- ===== Cofre (ícono vectorial propio) ===== -->
-        <DrawingImage x:Key="ChestIcon">
+        <!-- ===== Ícono y marca de Botín (los mismos dibujos que Assets/Botin.ico) ===== -->
+        <!-- Marca de Botín: cofre dorado abierto, la tapa volcada hacia atrás y la luz del botín saliendo. Lienzo de 256. -->
+        <DrawingGroup x:Key="Mark">
+            <GeometryDrawing Brush="#00000000" Geometry="M0,0 H256 V256 H0 Z"/>
+            <!-- Resplandor -->
+            <GeometryDrawing Geometry="M24,112 A104,94 0 1 0 232,112 A104,94 0 1 0 24,112 Z">
+                <GeometryDrawing.Brush>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#B3FFE7A8" Offset="0"/>
+                        <GradientStop Color="#40FCBB39" Offset="0.5"/>
+                        <GradientStop Color="#00FCBB39" Offset="1"/>
+                    </RadialGradientBrush>
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <!-- Tapa abierta: cara de adentro (oscura) -->
+            <GeometryDrawing Geometry="M70,122 L60,78 C58,64 70,56 84,56 H172 C186,56 198,64 196,78 L186,122 Z">
+                <GeometryDrawing.Brush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#8A5410" Offset="0"/>
+                        <GradientStop Color="#4A2B06" Offset="1"/>
+                    </LinearGradientBrush>
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <!-- Borde dorado de la tapa -->
+            <GeometryDrawing Geometry="M60,78 C58,64 70,56 84,56 H172 C186,56 198,64 196,78 L193,92 C194,80 186,72 172,72 H84 C70,72 62,80 63,92 Z">
+                <GeometryDrawing.Brush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FFE7A8" Offset="0"/>
+                        <GradientStop Color="#EE9E10" Offset="1"/>
+                    </LinearGradientBrush>
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <!-- Boca del cofre, encendida -->
+            <GeometryDrawing Geometry="M56,142 L70,120 H186 L200,142 Z">
+                <GeometryDrawing.Brush>
+                    <RadialGradientBrush Center="0.5,0.9" GradientOrigin="0.5,0.9" RadiusX="0.6" RadiusY="1.2">
+                        <GradientStop Color="#FFFFFFFF" Offset="0"/>
+                        <GradientStop Color="#FFFFF0C2" Offset="0.45"/>
+                        <GradientStop Color="#FFFFC94D" Offset="1"/>
+                    </RadialGradientBrush>
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <!-- Cuerpo -->
+            <GeometryDrawing Geometry="M58,140 H198 V198 C198,207 192,212 183,212 H73 C64,212 58,207 58,198 Z">
+                <GeometryDrawing.Brush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FCBB39" Offset="0"/>
+                        <GradientStop Color="#C48800" Offset="1"/>
+                    </LinearGradientBrush>
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <!-- Correas -->
+            <GeometryDrawing Brush="#B07206" Geometry="M80,140 H93 V212 H80 Z M163,140 H176 V212 H163 Z"/>
+            <!-- Filo de luz arriba del cuerpo -->
+            <GeometryDrawing Brush="#FFE7A8" Geometry="M58,140 H198 V147 H58 Z"/>
+            <!-- Cerradura -->
+            <GeometryDrawing Brush="#2A1C07" Geometry="M114,160 H142 C145,160 147,162 147,165 V186 C147,189 145,191 142,191 H114 C111,191 109,189 109,186 V165 C109,162 111,160 114,160 Z"/>
+            <GeometryDrawing Brush="#FFDA7C" Geometry="M122.5,171 A5.5,5.5 0 1 1 133.5,171 A5.5,5.5 0 1 1 122.5,171 Z M125.5,173 H130.5 L132,184 H124 Z"/>
+        </DrawingGroup>
+
+        <!-- Rayos y destellos: solo en tamaños grandes (en la bandeja serían ruido). -->
+        <DrawingGroup x:Key="MarkFx">
+            <GeometryDrawing Geometry="M108,128 L80,26 L104,20 L122,128 Z M122,128 L117,8 L139,8 L134,128 Z M134,128 L152,20 L176,26 L148,128 Z">
+                <GeometryDrawing.Brush>
+                    <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                        <GradientStop Color="#A6FFF4D6" Offset="0"/>
+                        <GradientStop Color="#00FFF4D6" Offset="0.85"/>
+                    </LinearGradientBrush>
+                </GeometryDrawing.Brush>
+            </GeometryDrawing>
+            <GeometryDrawing Brush="#FFF4D6" Geometry="M210,30 C212,45 216,49 231,51 C216,53 212,57 210,72 C208,57 204,53 189,51 C204,49 208,45 210,30 Z"/>
+            <GeometryDrawing Brush="#CCFFF4D6" Geometry="M50,40 C51,47 53,49 60,50 C53,51 51,53 50,60 C49,53 47,51 40,50 C47,49 49,47 50,40 Z"/>
+        </DrawingGroup>
+
+        <!-- Baldosa del ícono: azul noche con un filo de luz dorada arriba. -->
+        <GeometryDrawing x:Key="Tile" Geometry="M64,8 H192 C223,8 248,33 248,64 V192 C248,223 223,248 192,248 H64 C33,248 8,223 8,192 V64 C8,33 33,8 64,8 Z">
+            <GeometryDrawing.Brush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#1F2945" Offset="0"/>
+                    <GradientStop Color="#090E18" Offset="1"/>
+                </LinearGradientBrush>
+            </GeometryDrawing.Brush>
+            <GeometryDrawing.Pen>
+                <Pen Thickness="4">
+                    <Pen.Brush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#99FCBB39" Offset="0"/>
+                            <GradientStop Color="#1AFCBB39" Offset="0.5"/>
+                            <GradientStop Color="#00FCBB39" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Pen.Brush>
+                </Pen>
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+
+        <!-- La marca sola (overlay, marca de agua) y el ícono completo con su baldosa (menú lateral, estado vacío). -->
+        <DrawingImage x:Key="ChestIcon" Drawing="{StaticResource Mark}"/>
+        <DrawingImage x:Key="AppIcon">
             <DrawingImage.Drawing>
                 <DrawingGroup>
-                    <GeometryDrawing Brush="#00000000" Geometry="M0,0 H32 V32 H0 Z"/>
-                    <GeometryDrawing Geometry="M3,14 V10 C3,5.5 6,3.5 10,3.5 H22 C26,3.5 29,5.5 29,10 V14 Z">
-                        <GeometryDrawing.Brush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#C27A35" Offset="0"/>
-                                <GradientStop Color="#93561F" Offset="1"/>
-                            </LinearGradientBrush>
-                        </GeometryDrawing.Brush>
-                    </GeometryDrawing>
-                    <GeometryDrawing Geometry="M3,14 H29 V26.5 C29,27.6 28.1,28.5 27,28.5 H5 C3.9,28.5 3,27.6 3,26.5 Z">
-                        <GeometryDrawing.Brush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#8A4F1C" Offset="0"/>
-                                <GradientStop Color="#5E3412" Offset="1"/>
-                            </LinearGradientBrush>
-                        </GeometryDrawing.Brush>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="{StaticResource Gold}" Geometry="M6.5,4.6 H9.5 V28.5 H6.5 Z M22.5,4.6 H25.5 V28.5 H22.5 Z M3,12.6 H29 V15.4 H3 Z"/>
-                    <GeometryDrawing Geometry="M13,11 H19 V18.5 C19,19.3 18.3,20 17.5,20 H14.5 C13.7,20 13,19.3 13,18.5 Z">
-                        <GeometryDrawing.Brush>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#FFF0B8" Offset="0"/>
-                                <GradientStop Color="#F2A92E" Offset="1"/>
-                            </LinearGradientBrush>
-                        </GeometryDrawing.Brush>
-                    </GeometryDrawing>
-                    <GeometryDrawing Brush="#5E3412" Geometry="M15.2,14 H16.8 V17.2 H15.2 Z"/>
+                    <StaticResource ResourceKey="Tile"/>
+                    <StaticResource ResourceKey="Mark"/>
+                    <StaticResource ResourceKey="MarkFx"/>
                 </DrawingGroup>
             </DrawingImage.Drawing>
         </DrawingImage>

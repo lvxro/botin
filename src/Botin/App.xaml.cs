@@ -46,30 +46,36 @@ public partial class App : Application
             return;
         }
 
-        // Una sola instancia: si ya está abierta, la segunda le pide que se muestre y se cierra.
-        _single = new Mutex(true, @"Local\Botin.Instance", out var first);
-        var updated = Array.IndexOf(e.Args, "--updated");
-        if (!first && updated >= 0 && updated + 1 < e.Args.Length && int.TryParse(e.Args[updated + 1], out var oldPid))
+        // Vista previa (uso interno): trabaja sobre una copia de los datos, fuera de la pantalla, y no toca la instancia abierta.
+        var previewAt = Array.IndexOf(e.Args, "--preview");
+        var previewDir = previewAt >= 0 && previewAt + 1 < e.Args.Length ? e.Args[previewAt + 1] : null;
+        if (previewDir == null)
         {
-            // Recién actualizado: la versión vieja todavía se está cerrando. Se espera a que suelte la instancia.
-            _single.Dispose();
-            try { Process.GetProcessById(oldPid).WaitForExit(20000); } catch { }
-            _single = new Mutex(true, @"Local\Botin.Instance", out first);
-        }
-        _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Botin.Show");
-        if (!first)
-        {
-            _showSignal.Set();
-            Shutdown();
-            return;
-        }
-        new Thread(() =>
-        {
-            while (_showSignal.WaitOne())
+            // Una sola instancia: si ya está abierta, la segunda le pide que se muestre y se cierra.
+            _single = new Mutex(true, @"Local\Botin.Instance", out var first);
+            var updated = Array.IndexOf(e.Args, "--updated");
+            if (!first && updated >= 0 && updated + 1 < e.Args.Length && int.TryParse(e.Args[updated + 1], out var oldPid))
             {
-                Dispatcher.BeginInvoke(ShowMain);
+                // Recién actualizado: la versión vieja todavía se está cerrando. Se espera a que suelte la instancia.
+                _single.Dispose();
+                try { Process.GetProcessById(oldPid).WaitForExit(20000); } catch { }
+                _single = new Mutex(true, @"Local\Botin.Instance", out first);
             }
-        }) { IsBackground = true }.Start();
+            _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\Botin.Show");
+            if (!first)
+            {
+                _showSignal.Set();
+                Shutdown();
+                return;
+            }
+            new Thread(() =>
+            {
+                while (_showSignal.WaitOne())
+                {
+                    Dispatcher.BeginInvoke(ShowMain);
+                }
+            }) { IsBackground = true }.Start();
+        }
 
         // Con aceleración por GPU, a escalas como 125 % y con algunos drivers (sobre todo AMD), WPF deja líneas
         // finas en los bordes de cada zona que repinta. Esta interfaz es liviana: se dibuja por software, sin marcas.
@@ -79,7 +85,7 @@ public partial class App : Application
         try { Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
         try { EcoQos.Enable(); } catch { }
 
-        Store = new Store(Store.DefaultFolder());
+        Store = new Store(previewDir != null ? CopyForPreview(previewDir) : Store.DefaultFolder());
         ErrorLog.FilePath = Store.ErrorLogPath;
         DispatcherUnhandledException += (_, ex) =>
         {
@@ -131,6 +137,12 @@ public partial class App : Application
         Window = new MainWindow(this);
         var helper = new WindowInteropHelper(Window);
         helper.EnsureHandle();
+        if (previewDir != null)
+        {
+            Tracker.Changed += QueueRefresh;
+            _ = TakePreview(previewDir);
+            return;
+        }
         RegisterHotkeys(helper.Handle);
 
         CreateTray();
@@ -185,7 +197,7 @@ public partial class App : Application
         Refresh();
         Overlay.Show();
         var snap = Snapshot.Build(Tracker, Config, FortniteRunning);
-        if (snap.Last != null) Overlay.PinSummaryForShot(snap.Last, isRecord: true);
+        if (snap.Last != null) Overlay.PinSummaryForShot(snap.Last, isRecord: true, snap);
         await Task.Delay(800);
         Save((FrameworkElement)Window.Content, Path.Combine(dir, "main.png"));
         if (Window.FindName("Scroller") is System.Windows.Controls.ScrollViewer sv && sv.Content is FrameworkElement inner)
@@ -256,9 +268,106 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Copia config, historial y mapa a la carpeta de la vista previa, así no se escribe nada en los datos reales.</summary>
+    private static string CopyForPreview(string dir)
+    {
+        var src = Store.DefaultFolder();
+        var dst = Path.Combine(dir, "datos");
+        Directory.CreateDirectory(Path.Combine(dst, "map"));
+        foreach (var f in new[] { "config.json", "data.json" })
+        {
+            if (File.Exists(Path.Combine(src, f))) File.Copy(Path.Combine(src, f), Path.Combine(dst, f), true);
+        }
+        foreach (var f in Directory.Exists(Path.Combine(src, "map")) ? Directory.GetFiles(Path.Combine(src, "map")) : Array.Empty<string>())
+        {
+            File.Copy(f, Path.Combine(dst, "map", Path.GetFileName(f)), true);
+        }
+        return dst;
+    }
+
+    /// <summary>
+    /// Vista previa: abre la ventana y el overlay fuera de la pantalla (no tapan el juego ni roban el foco), guarda una
+    /// imagen de cada estado del overlay (con fondo transparente) y de cada sección, y se cierra.
+    /// </summary>
+    private async Task TakePreview(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        Window.ShowActivated = false;
+        Window.WindowStartupLocation = WindowStartupLocation.Manual;
+        Window.Left = -32000;
+        Window.Top = 0;
+        Window.Show();
+        Overlay.Left = -30000;
+        Overlay.Top = 0;
+        Overlay.Show();
+        await Task.Delay(1200);
+        Refresh();
+        await Task.Delay(900);
+        // La pastilla y el momento se guardan por separado (sin la escala del usuario).
+        var root = Overlay.Pill;
+        RenderPng(root, Path.Combine(dir, "overlay.png"), transparent: true);
+
+        Overlay.PreviewLive(true);
+        await Task.Delay(400);
+        RenderPng(root, Path.Combine(dir, "overlay-live.png"), transparent: true);
+        Overlay.PreviewLive(false);
+
+        var snap = Snapshot.Build(Tracker, Config, FortniteRunning);
+        if (snap.Last != null)
+        {
+            Overlay.PinSummaryForShot(snap.Last, isRecord: true, snap);
+            await Task.Delay(700);
+            // RenderTargetBitmap dibuja el elemento donde está dentro de su padre: para la foto, el momento va arriba de todo.
+            var margin = Overlay.Summary.Margin;
+            Overlay.Summary.Margin = new Thickness(0);
+            Overlay.Pill.Visibility = Visibility.Collapsed;
+            Overlay.UpdateLayout();
+            RenderPng(Overlay.Summary, Path.Combine(dir, "overlay-momento.png"), transparent: true);
+            Overlay.Summary.Margin = margin;
+            Overlay.Pill.Visibility = Visibility.Visible;
+            Overlay.HideSummaryForShot();
+        }
+
+        foreach (var (page, file) in new[] { (UI.MainWindow.Page.Home, "inicio.png"), (UI.MainWindow.Page.Matches, "partidas.png"), (UI.MainWindow.Page.Loot, "saqueo.png") })
+        {
+            Window.ShowPage(page);
+            await Task.Delay(700);
+            RenderPng((FrameworkElement)Window.Content, Path.Combine(dir, file), transparent: false);
+        }
+        Quit();
+    }
+
+    private static void RenderPng(FrameworkElement el, string path, bool transparent)
+    {
+        el.UpdateLayout();
+        var w = (int)Math.Ceiling(el.ActualWidth);
+        var h = (int)Math.Ceiling(el.ActualHeight);
+        if (w <= 0 || h <= 0) return;
+        var rtb = new System.Windows.Media.Imaging.RenderTargetBitmap(w, h, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        if (transparent)
+        {
+            // Directo, con sus efectos (sombras y brillos), sobre fondo transparente.
+            rtb.Render(el);
+        }
+        else
+        {
+            var dv = new System.Windows.Media.DrawingVisual();
+            using (var dc = dv.RenderOpen())
+            {
+                dc.DrawRectangle(Palette.Bg, null, new Rect(0, 0, w, h));
+                dc.DrawRectangle(new System.Windows.Media.VisualBrush(el) { Stretch = System.Windows.Media.Stretch.None, AlignmentX = System.Windows.Media.AlignmentX.Left, AlignmentY = System.Windows.Media.AlignmentY.Top }, null, new Rect(0, 0, w, h));
+            }
+            rtb.Render(dv);
+        }
+        var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(rtb));
+        using var fs = File.Create(path);
+        enc.Save(fs);
+    }
+
     // =============================== Estado ===============================
 
-    private void QueueRefresh()
+    public void QueueRefresh()
     {
         if (_refreshQueued) return;
         _refreshQueued = true;

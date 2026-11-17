@@ -51,7 +51,7 @@
         <!-- ================= Menú lateral ================= -->
         <Border x:Name="Rail" Width="92" Background="{StaticResource Bg}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
             <DockPanel>
-                <Image DockPanel.Dock="Top" Source="{StaticResource ChestIcon}" Width="36" Height="36" Margin="0,20,0,22" ToolTip="Botín"/>
+                <Image DockPanel.Dock="Top" Source="{StaticResource AppIcon}" Width="44" Height="44" Margin="0,18,0,20" ToolTip="Botín"/>
                 <Button x:Name="NavSettings" DockPanel.Dock="Bottom" Margin="0,0,0,14" HorizontalAlignment="Center" Click="Settings_Click" Cursor="Hand"
                         ToolTip="Ajustes" FocusVisualStyle="{x:Null}">
                     <Button.Template>
@@ -258,7 +258,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Image Source="{StaticResource ChestIcon}" Width="96" Height="96" VerticalAlignment="Top"/>
+                                <Image Source="{StaticResource AppIcon}" Width="96" Height="96" VerticalAlignment="Top"/>
                                 <StackPanel Grid.Column="1" Margin="32,0,0,0">
                                     <TextBlock Text="Listo para contar" FontSize="22" FontWeight="SemiBold"/>
                                     <TextBlock Style="{StaticResource Sub}" FontSize="13.5" Margin="0,6,0,18"
@@ -741,12 +741,12 @@
                             <CheckBox x:Name="SetCompact" Style="{StaticResource Switch}" Margin="0,18,0,0" Click="SettingChanged">
                                 <StackPanel>
                                     <TextBlock Text="Modo compacto" FontSize="13.5" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Solo el total. Sesión, última y tesoros aparecen unos segundos al terminar cada partida." Style="{StaticResource Sub}"/>
+                                    <TextBlock Text="Solo el anillo y el total. La sesión y los tesoros aparecen unos segundos al terminar cada partida." Style="{StaticResource Sub}"/>
                                 </StackPanel>
                             </CheckBox>
                             <TextBlock Text="Qué muestra" FontSize="13" FontWeight="SemiBold" Margin="0,18,0,4"/>
+                            <CheckBox x:Name="ShowGoal" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Anillo de la meta del día" FontSize="13"/></CheckBox>
                             <CheckBox x:Name="ShowSession" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Cofres de la sesión" FontSize="13"/></CheckBox>
-                            <CheckBox x:Name="ShowLast" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Última partida / partida en curso" FontSize="13"/></CheckBox>
                             <CheckBox x:Name="ShowTreasures" Style="{StaticResource Switch}" Margin="0,6" Click="SettingChanged"><TextBlock Text="Tesoros" FontSize="13"/></CheckBox>
                             <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="14,12" Margin="0,12,0,0">
                                 <TextBlock Style="{StaticResource Sub}" FontSize="12">
@@ -754,6 +754,16 @@
                                 </TextBlock>
                             </Border>
 
+                            <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,24"/>
+                            <TextBlock Text="META DEL DÍA" Style="{StaticResource Caption}" Margin="0,0,0,12" Foreground="{StaticResource Gold}"/>
+                            <Grid>
+                                <TextBlock Text="Cofres por día de juego" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="GoalLabel" Text="–" Style="{StaticResource Sub}" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Slider x:Name="GoalSlider" Minimum="100" Maximum="5000" SmallChange="50" LargeChange="250" Margin="0,6,0,0" ValueChanged="Goal_Changed"/>
+                            <TextBlock x:Name="GoalHint" Style="{StaticResource Sub}" FontSize="11.5" Margin="0,6,0,0"
+                                       Text="Un día de juego termina cuando dejás de jugar 5 horas: una noche que pasa las 12 cuenta como un solo día."/>
+                            <Button x:Name="GoalAutoBtn" Style="{StaticResource Btn}" HorizontalAlignment="Left" Padding="10,5" Margin="0,10,0,0" Content="Usar la automática" Click="GoalAuto_Click"/>
                             <Rectangle Height="1" Fill="{StaticResource Line}" Margin="0,24"/>
                             <TextBlock Text="GENERAL" Style="{StaticResource Caption}" Margin="0,0,0,12" Foreground="{StaticResource Gold}"/>
                             <CheckBox x:Name="SetStartup" Style="{StaticResource Switch}" Click="SettingChanged">

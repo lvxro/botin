@@ -584,7 +584,8 @@ public partial class MainWindow : Window
         ScaleLabel.Text = $"{ScaleSlider.Value:0} %";
         OpacityLabel.Text = $"{OpacitySlider.Value:0} %";
         ShowSession.IsChecked = c.OverlayShowSession;
-        ShowLast.IsChecked = c.OverlayShowLast;
+        ShowGoal.IsChecked = c.OverlayShowGoal;
+        LoadGoal();
         ShowTreasures.IsChecked = c.OverlayShowTreasures;
         SetCompact.IsChecked = c.OverlayCompact;
         SetStartup.IsChecked = c.StartWithWindows;
@@ -607,7 +608,7 @@ public partial class MainWindow : Window
         var c = _app.Config;
         c.OverlayMode = ModeAlways.IsChecked == true ? "always" : "auto";
         c.OverlayShowSession = ShowSession.IsChecked == true;
-        c.OverlayShowLast = ShowLast.IsChecked == true;
+        c.OverlayShowGoal = ShowGoal.IsChecked == true;
         c.OverlayShowTreasures = ShowTreasures.IsChecked == true;
         c.OverlayCompact = SetCompact.IsChecked == true;
         c.CloseToTray = SetTray.IsChecked == true;
@@ -648,6 +649,42 @@ public partial class MainWindow : Window
         _app.Config.OverlayOpacity = Math.Round(OpacitySlider.Value / 5) * 5 / 100;
         _app.SaveConfig();
         _app.ApplyOverlay(preview: true);
+    }
+
+    // ----- Meta del día -----
+
+    private void LoadGoal()
+    {
+        var auto = _last?.GoalAuto;
+        var goal = _app.Config.DailyGoal ?? auto ?? 500;
+        GoalSlider.Value = Math.Clamp(goal, GoalSlider.Minimum, GoalSlider.Maximum);
+        GoalLabel.Text = $"{Pretty.N(goal)} cofres" + (_app.Config.DailyGoal == null ? " · automática" : "");
+        GoalAutoBtn.Visibility = _app.Config.DailyGoal != null ? Visibility.Visible : Visibility.Collapsed;
+        GoalAutoBtn.Content = auto is int a ? $"Usar la automática ({Pretty.N(a)})" : "Usar la automática";
+        GoalHint.Text = (auto is int ? "La automática es tu día de juego típico: la mediana de tus últimos 7. " : "La automática aparece después de 3 días de juego. ")
+            + "Un día de juego termina cuando dejás de jugar 5 horas: una noche que pasa las 12 cuenta como un solo día.";
+    }
+
+    private void Goal_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        // Al crear la ventana, WPF lleva el slider a su mínimo y dispara este evento: eso no es el usuario.
+        if (GoalLabel == null || _loadingSettings || SettingsLayer.Visibility != Visibility.Visible) return;
+        var goal = (int)(Math.Round(GoalSlider.Value / 50) * 50);
+        _app.Config.DailyGoal = goal;
+        GoalLabel.Text = $"{Pretty.N(goal)} cofres";
+        GoalAutoBtn.Visibility = Visibility.Visible;
+        _app.SaveConfig();
+        _app.QueueRefresh();
+    }
+
+    private void GoalAuto_Click(object sender, RoutedEventArgs e)
+    {
+        _app.Config.DailyGoal = null;
+        _app.SaveConfig();
+        _loadingSettings = true;
+        LoadGoal();
+        _loadingSettings = false;
+        _app.QueueRefresh();
     }
 
     private bool _ccBanner, _updateBanner;

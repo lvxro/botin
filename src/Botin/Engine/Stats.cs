@@ -123,6 +123,46 @@ public static class TokenOdds
     }
 }
 
+/// <summary>
+/// Meta del día. Un día de juego termina cuando dejás de jugar <see cref="Break"/> o más: así una noche larga que pasa la
+/// medianoche cuenta como un solo día. La meta automática es tu día típico: la mediana de tus últimos 7 días de juego.
+/// </summary>
+public static class GameDay
+{
+    public static readonly TimeSpan Break = TimeSpan.FromHours(5);
+
+    private static DateTime End(MatchRecord m) => m.When.AddSeconds(m.DurationSeconds ?? 0);
+
+    /// <summary>Parte las partidas (ordenadas) en días de juego.</summary>
+    public static List<List<MatchRecord>> Split(IReadOnlyList<MatchRecord> ordered)
+    {
+        var days = new List<List<MatchRecord>>();
+        foreach (var m in ordered)
+        {
+            if (days.Count == 0 || m.When - End(days[^1][^1]) >= Break) days.Add(new List<MatchRecord>());
+            days[^1].Add(m);
+        }
+        return days;
+    }
+
+    /// <summary>Cofres del día de juego actual (con la partida en curso) y la meta automática, si hay historia suficiente.</summary>
+    public static (int Chests, int? Auto) Compute(IReadOnlyList<MatchRecord> ordered, bool inMatch, int liveChests, DateTime nowUtc)
+    {
+        var days = Split(ordered);
+        var current = days.Count > 0 && (inMatch || nowUtc - End(days[^1][^1]) < Break) ? days[^1] : null;
+        var chests = (current?.Sum(m => m.ChestsOpened) ?? 0) + (inMatch ? liveChests : 0);
+
+        var past = days.Where(d => !ReferenceEquals(d, current)).TakeLast(7).Select(d => d.Sum(m => m.ChestsOpened)).Where(n => n > 0).OrderBy(n => n).ToList();
+        int? auto = null;
+        if (past.Count >= 3)
+        {
+            var median = past.Count % 2 == 1 ? past[past.Count / 2] : (past[past.Count / 2 - 1] + past[past.Count / 2]) / 2.0;
+            auto = Math.Max(100, (int)Math.Round(median / 50) * 50);
+        }
+        return (chests, auto);
+    }
+}
+
 /// <summary>Una barra: cofres (o minutos, en el gráfico de tiempo).</summary>
 public sealed record ChartPoint(int Value, int Treasures, string Label, bool Live, bool Record = false, string? Axis = null);
 
@@ -177,6 +217,10 @@ public sealed class Snapshot
     public (DateTime Day, double Rate)? BestRateDay { get; init; }
     /// <summary>Cofres de esta temporada (con la partida en curso), para la chance del token.</summary>
     public int SeasonChests { get; init; }
+    /// <summary>Cofres del día de juego actual (ver <see cref="GameDay"/>), la meta que se usa y la automática.</summary>
+    public int GoalChests { get; init; }
+    public int Goal { get; init; }
+    public int? GoalAuto { get; init; }
     public LootCurve Curve { get; init; } = new();
     public LootPlaces Places { get; init; } = new();
 
@@ -270,6 +314,8 @@ public sealed class Snapshot
                     appSessions.Add(new PlaySession(ls2, now, 1, liveChests ?? 0));
             }
 
+            var gameDay = GameDay.Compute(matches, t.InMatch, liveChests ?? 0, now);
+
             var types = matches.SelectMany(m => m.Chests)
                 .GroupBy(ch => ChestKinds.Canonical(ch.Kind))
                 .Select(g => new ChestTypeSlice(L.Name(g.Key), g.Count(), ColorKey(g.Key)))
@@ -327,6 +373,9 @@ public sealed class Snapshot
                 BestRateDay = sessions.GroupBy(x => x.Day).Where(g => g.Sum(x => x.Minutes) >= 60)
                     .Select(g => (Day: g.Key, Rate: PlaySession.PerHour(g) ?? 0)).OrderByDescending(x => x.Rate).Cast<(DateTime, double)?>().FirstOrDefault(),
                 SeasonChests = SeasonChestCount(matches) + (liveChests ?? 0),
+                GoalChests = gameDay.Chests,
+                GoalAuto = gameDay.Auto,
+                Goal = c.DailyGoal is int g && g > 0 ? g : gameDay.Auto ?? 500,
                 Curve = LootCurve.Build(matches),
                 Places = LootPlaces.Build(matches),
                 Types = types,
