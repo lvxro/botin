@@ -146,7 +146,7 @@ public static class GameDay
     }
 
     /// <summary>Cofres del día de juego actual (con la partida en curso) y la meta automática, si hay historia suficiente.</summary>
-    public static (int Chests, int? Auto) Compute(IReadOnlyList<MatchRecord> ordered, bool inMatch, int liveChests, DateTime nowUtc)
+    public static (int Chests, int? Auto, DateTime? StartUtc) Compute(IReadOnlyList<MatchRecord> ordered, bool inMatch, int liveChests, DateTime nowUtc)
     {
         var days = Split(ordered);
         var current = days.Count > 0 && (inMatch || nowUtc - End(days[^1][^1]) < Break) ? days[^1] : null;
@@ -159,7 +159,7 @@ public static class GameDay
             var median = past.Count % 2 == 1 ? past[past.Count / 2] : (past[past.Count / 2 - 1] + past[past.Count / 2]) / 2.0;
             auto = Math.Max(100, (int)Math.Round(median / 50) * 50);
         }
-        return (chests, auto);
+        return (chests, auto, current?[0].When);
     }
 }
 
@@ -221,6 +221,9 @@ public sealed class Snapshot
     public int GoalChests { get; init; }
     public int Goal { get; init; }
     public int? GoalAuto { get; init; }
+    /// <summary>Minutos jugados y cofres por hora en el día de juego actual (con el lobby entre partidas).</summary>
+    public double GoalMinutes { get; init; }
+    public double? GoalRate { get; init; }
     public LootCurve Curve { get; init; } = new();
     public LootPlaces Places { get; init; } = new();
 
@@ -315,6 +318,8 @@ public sealed class Snapshot
             }
 
             var gameDay = GameDay.Compute(matches, t.InMatch, liveChests ?? 0, now);
+            var dayStart = gameDay.StartUtc ?? liveStart;
+            var daySessions = dayStart is DateTime ds ? sessions.Where(x => x.EndUtc >= ds).ToList() : new List<PlaySession>();
 
             var types = matches.SelectMany(m => m.Chests)
                 .GroupBy(ch => ChestKinds.Canonical(ch.Kind))
@@ -375,6 +380,8 @@ public sealed class Snapshot
                 SeasonChests = SeasonChestCount(matches) + (liveChests ?? 0),
                 GoalChests = gameDay.Chests,
                 GoalAuto = gameDay.Auto,
+                GoalMinutes = daySessions.Sum(x => x.Minutes),
+                GoalRate = PlaySession.PerHour(daySessions),
                 Goal = c.DailyGoal is int g && g > 0 ? g : gameDay.Auto ?? 500,
                 Curve = LootCurve.Build(matches),
                 Places = LootPlaces.Build(matches),

@@ -84,7 +84,8 @@ public partial class MainWindow : Window
 
         var empty = s.Matches == 0 && !s.InMatch;
         EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
-        DataArea.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+        DataArea.Visibility = DataArea2.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+        RenderDay(s);
         // Sin partidas, Partidas y Saqueo no tienen nada que mostrar: queda solo Inicio con los pasos para empezar.
         NavMatches.IsEnabled = NavLoot.IsEnabled = !empty;
         if (empty && _page != Page.Home) ShowPage(Page.Home);
@@ -134,7 +135,12 @@ public partial class MainWindow : Window
             BestSub.Text = $"{Pretty.Relative(best.When)} · {Pretty.Playlist(best.Playlist)}";
         }
         AvgText.Text = Pretty.N(s.Average, 1);
-        TodayText.Text = Pretty.N(s.Today);
+        MatchesText.Text = Pretty.N(s.Matches);
+        var bestDay = s.Daily.Where(p => p.Record).FirstOrDefault() ?? s.Daily.MaxBy(p => p.Value);
+        BestDayText.Text = bestDay != null ? Pretty.N(bestDay.Value) : "–";
+        BestDaySub.Text = bestDay?.Axis is string day ? $"mejor día · {day}" : "mejor día";
+        BestRateText.Text = s.BestRateDay is { } br ? $"{Pretty.N(br.Rate)}/h" : "–";
+        BestRateSub.Text = s.BestRateDay is { } br2 ? $"mejor ritmo · {br2.Day.ToString("ddd d", L.Culture)}" : "mejor ritmo";
         WinsText.Text = Pretty.N(s.Wins);
 
         var token = TokenOdds.Chance(s.SeasonChests);
@@ -144,13 +150,18 @@ public partial class MainWindow : Window
         TokenSub.Text = $"{Pretty.N(s.SeasonChests)} cofres esta temporada · 1 en {Pretty.N(TokenOdds.OneIn)} por cofre (dato de Epic)."
             + (s.SeasonChests < half ? $" El 50 % llega a los {Pretty.N(half)} cofres: te faltan {Pretty.N(half - s.SeasonChests)}." : "");
 
-        var maxType = Math.Max(1, s.Types.Count > 0 ? s.Types.Max(t => t.Count) : 1);
-        TypesList.ItemsSource = s.Types.Select(t => new
+        // Tipos de cofre: lista con cantidad y porcentaje (con barras, los chicos ni se veían al lado de los comunes).
+        var typeTotal = Math.Max(1, s.Types.Sum(t => t.Count));
+        TypesSub.Text = $"{Pretty.N(typeTotal)} cofres de {s.Types.Count} tipos";
+        TypesList.ItemsSource = s.Types.Select(t =>
         {
-            t.Name,
-            CountText = Pretty.N(t.Count),
-            Ratio = (double)t.Count / maxType,
-            Brush = TypeBrush(t.ColorKey),
+            var pct = 100.0 * t.Count / typeTotal;
+            return new
+            {
+                t.Name,
+                CountText = Pretty.N(t.Count),
+                PctText = pct < 1 ? "<1 %" : $"{Pretty.N(Math.Round(pct))} %",
+            };
         }).ToList();
 
         var rows = _showAll ? s.Rows : s.Rows.Take(12).ToList();
@@ -198,6 +209,42 @@ public partial class MainWindow : Window
 
         ProfileBtn.Visibility = s.Profiles.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         ProfileText.Text = s.ProfileName ?? "Perfil";
+    }
+
+    private int _dayShown = -1, _dayGoalShown;
+
+    /// <summary>Tarjeta "Meta del día": el mismo anillo que el overlay, con lo que falta, el tiempo y el ritmo del día de juego.</summary>
+    private void RenderDay(Snapshot s)
+    {
+        var goal = Math.Max(1, s.Goal);
+        var p = (double)s.GoalChests / goal;
+        var done = s.GoalChests >= goal;
+        DayRing.AnimateTo(p);
+        DayPct.Text = done ? "✓" : Pretty.N(Math.Floor(p * 100));
+        DayPct.Foreground = done ? Res("Gold") : Res("Text");
+        DayPctUnit.Text = done ? "" : "%";
+        DayChests.Text = Pretty.N(s.GoalChests);
+        DayGoal.Text = $" / {Pretty.N(goal)}";
+        DayLeft.Text = done ? "¡Meta cumplida!" : $"Te faltan {Pretty.N(goal - s.GoalChests)} cofres";
+        DayLeft.Foreground = done ? Res("Gold") : Res("Muted");
+        DaySub.Text = s.GoalMinutes >= 1
+            ? $"{Pretty.Minutes(s.GoalMinutes)} jugando" + (s.GoalRate is double r ? $" · {Pretty.N(r)} cofres/h" : "")
+            : "Todavía no jugaste hoy";
+        DayRing.ToolTip = (_app.Config.DailyGoal == null ? "Meta automática: tu día de juego típico (la mediana de tus últimos 7)." : "Meta elegida en Ajustes.")
+            + " Un día de juego termina cuando dejás de jugar 5 horas.";
+
+        // Meta cumplida recién: el anillo se enciende.
+        if (_dayShown >= 0 && _dayShown < _dayGoalShown && done && goal == _dayGoalShown && SystemParameters.ClientAreaAnimation)
+        {
+            var a = new DoubleAnimationUsingKeyFrames { Duration = TimeSpan.FromSeconds(1.8) };
+            a.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.25))));
+            a.KeyFrames.Add(new EasingDoubleKeyFrame(0.25, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.6))));
+            a.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(0.9))));
+            a.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(1.8)), new CubicEase { EasingMode = EasingMode.EaseIn }));
+            DayRingGlow.BeginAnimation(OpacityProperty, a);
+        }
+        _dayShown = s.GoalChests;
+        _dayGoalShown = goal;
     }
 
     /// <summary>Chip "▲ +4,2" verde o "▼ −3" rojo comparado con el promedio (oculto si no hay con qué comparar).</summary>
@@ -461,8 +508,6 @@ public partial class MainWindow : Window
     /// <summary>" · 230 cofres/h" (o nada si se jugó muy poco para que el número diga algo).</summary>
     private static string Rate(double? perHour) => perHour is double r ? $" · {Pretty.N(r)} cofres/h" : "";
 
-    /// <summary>Todos los tipos de cofre van en el mismo oro: el nombre ya dice cuál es.</summary>
-    private static Brush TypeBrush(string colorKey) => colorKey is "Rare" or "Buried" or "Sprite" or "Normal" ? Palette.GoldData : Palette.Dim;
 
     private static readonly Brush WinRowBg = Palette.B(Palette.Alpha(Palette.Gold400, 0x10));
 

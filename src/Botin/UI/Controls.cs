@@ -473,3 +473,58 @@ public sealed class MinuteChart : FrameworkElement
         }
     }
 }
+
+/// <summary>Anillo de la meta del día: pista oscura y arco dorado desde arriba, en sentido horario. Se anima al cambiar.</summary>
+public sealed class GoalRing : FrameworkElement
+{
+    public static readonly DependencyProperty ProgressProperty = DependencyProperty.Register(
+        nameof(Progress), typeof(double), typeof(GoalRing), new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public double Progress
+    {
+        get => (double)GetValue(ProgressProperty);
+        set => SetValue(ProgressProperty, value);
+    }
+
+    public double Thickness { get; set; } = 10;
+
+    /// <summary>Lleva el anillo al valor nuevo con una animación corta (o directo si Windows tiene las animaciones apagadas).</summary>
+    public void AnimateTo(double target)
+    {
+        if (Math.Abs(target - Progress) < 0.0005) return;
+        if (!SystemParameters.ClientAreaAnimation || !IsVisible)
+        {
+            BeginAnimation(ProgressProperty, null);
+            Progress = target;
+            return;
+        }
+        BeginAnimation(ProgressProperty, new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromSeconds(0.8))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
+        });
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        var size = Math.Min(ActualWidth, ActualHeight);
+        if (size <= Thickness * 2) return;
+        var c = new Point(ActualWidth / 2, ActualHeight / 2);
+        var r = size / 2 - Thickness / 2;
+        dc.DrawEllipse(null, new Pen(Palette.SurfaceHover, Thickness), c, r, r);
+
+        var p = Math.Clamp(Progress, 0, 1);
+        if (p < 0.004) return;
+        var pen = new Pen(Palette.Gold, Thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        if (p > 0.996)
+        {
+            dc.DrawEllipse(null, pen, c, r, r);
+            return;
+        }
+        var a = (-90 + 360 * p) * Math.PI / 180;
+        var fig = new PathFigure { StartPoint = new Point(c.X, c.Y - r), IsClosed = false };
+        fig.Segments.Add(new ArcSegment(new Point(c.X + r * Math.Cos(a), c.Y + r * Math.Sin(a)), new Size(r, r), 0, p > 0.5, SweepDirection.Clockwise, true));
+        var g = new PathGeometry();
+        g.Figures.Add(fig);
+        dc.DrawGeometry(null, pen, g);
+    }
+}
