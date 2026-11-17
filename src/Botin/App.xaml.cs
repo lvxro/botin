@@ -197,18 +197,22 @@ public partial class App : Application
         Window.Activate();
         await Task.Delay(500);
         ScreenShot(Window, Path.Combine(dir, "main-screen.png"), 0);
+        // Una captura por sección (y el gráfico de tiempo en Inicio).
+        async Task ShotPage(UI.MainWindow.Page page, string file, bool time = false)
+        {
+            Window.PrepareShot(byDay: false, time: time);
+            Window.ShowPage(page);
+            await Task.Delay(800);
+            if (Window.FindName("Scroller") is System.Windows.Controls.ScrollViewer sv && sv.Content is FrameworkElement inner)
+            {
+                Save(inner, Path.Combine(dir, file));
+            }
+        }
+        await ShotPage(UI.MainWindow.Page.Home, "time.png", time: true);
+        await ShotPage(UI.MainWindow.Page.Matches, "partidas.png");
+        await ShotPage(UI.MainWindow.Page.Loot, "saqueo.png");
         Window.PrepareShot(byDay: false);
-        await Task.Delay(800);
-        if (Window.FindName("Scroller") is System.Windows.Controls.ScrollViewer sv2 && sv2.Content is FrameworkElement inner2)
-        {
-            Save(inner2, Path.Combine(dir, "detail.png"));
-        }
-        Window.PrepareShot(byDay: false, time: true);
-        await Task.Delay(800);
-        if (Window.FindName("Scroller") is System.Windows.Controls.ScrollViewer sv3 && sv3.Content is FrameworkElement inner3)
-        {
-            Save(inner3, Path.Combine(dir, "time.png"));
-        }
+        Window.ShowPage(UI.MainWindow.Page.Home);
         Window.FindName("SettingsLayer");
         Quit();
 

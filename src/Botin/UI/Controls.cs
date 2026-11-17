@@ -12,19 +12,20 @@ public sealed class BarChart : FrameworkElement
     private IReadOnlyList<ChartPoint> _points = Array.Empty<ChartPoint>();
     private int _hover = -1;
 
-    private static readonly Brush BarBrush = Frozen(new LinearGradientBrush(Color.FromRgb(0xFF, 0xD3, 0x6E), Color.FromRgb(0xE0, 0x90, 0x1C), 90));
-    private static readonly Brush BarDim = Frozen(new LinearGradientBrush(Color.FromArgb(0xB0, 0xF7, 0xB9, 0x3E), Color.FromArgb(0x70, 0xE0, 0x90, 0x1C), 90));
-    private static readonly Brush LiveBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xFF, 0x5C, 0x6C)));
-    private static readonly Brush Purple = Frozen(new SolidColorBrush(Color.FromRgb(0xB9, 0x94, 0xFF)));
-    private static readonly Brush Muted = Frozen(new SolidColorBrush(Color.FromRgb(0x5A, 0x63, 0x77)));
+    private static readonly Brush BarBrush = Frozen(new LinearGradientBrush(Palette.Gold500, Palette.Gold600, 90));
+    private static readonly Brush RecordBrush = Frozen(new LinearGradientBrush(Palette.Gold300, Palette.Gold400, 90));
+    private static readonly Brush BarDim = Frozen(new LinearGradientBrush(Palette.Alpha(Palette.Gold500, 0x90), Palette.Alpha(Palette.Gold600, 0x70), 90));
+    private static readonly Brush LiveBrush = Palette.Red;
+    private static readonly Brush Purple = Palette.Purple;
+    private static readonly Brush Muted = Palette.Dim;
     private static readonly Brush HoverCol = Frozen(new SolidColorBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)));
-    private static readonly Brush GoldText = Frozen(new SolidColorBrush(Color.FromRgb(0xF7, 0xB9, 0x3E)));
-    private static readonly Brush MutedLight = Frozen(new SolidColorBrush(Color.FromRgb(0x9B, 0xA4, 0xB6)));
-    private static readonly Pen RecordPen = Frozen(new Pen(new SolidColorBrush(Color.FromRgb(0xFF, 0xF0, 0xB8)), 1.5));
-    private static readonly Brush TipBg = Frozen(new SolidColorBrush(Color.FromRgb(0x1F, 0x27, 0x39)));
-    private static readonly Brush TextBrush = Frozen(new SolidColorBrush(Color.FromRgb(0xEC, 0xEF, 0xF5)));
-    private static readonly Pen GridPen = Frozen(new Pen(new SolidColorBrush(Color.FromRgb(0x1C, 0x23, 0x33)), 1));
-    private static readonly Pen AvgPen = Frozen(new Pen(new SolidColorBrush(Color.FromArgb(0xAA, 0x8C, 0x95, 0xA8)), 1.2) { DashStyle = new DashStyle(new double[] { 3, 3 }, 0) });
+    private static readonly Brush GoldText = Palette.Gold;
+    private static readonly Brush MutedLight = Palette.Muted;
+    private static readonly Pen RecordPen = Frozen(new Pen(Palette.GoldLight, 1.5));
+    private static readonly Brush TipBg = Palette.SurfaceHover;
+    private static readonly Brush TextBrush = Palette.Text;
+    private static readonly Pen GridPen = Frozen(new Pen(Palette.Surface2, 1));
+    private static readonly Pen AvgPen = Frozen(new Pen(Palette.Dim, 1.2) { DashStyle = new DashStyle(new double[] { 3, 3 }, 0) });
     private static readonly Typeface Face = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
     private static readonly Typeface NumFace = new(new FontFamily("Bahnschrift"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
 
@@ -141,7 +142,7 @@ public sealed class BarChart : FrameworkElement
             var h = Math.Max(p.Value / (double)top * plot.Height, 3);
             var x = plot.Left + i * slot + (slot - barW) / 2;
             var r = new Rect(x, plot.Bottom - h, barW, h);
-            var brush = p.Live ? LiveBrush : (_hover == -1 || _hover == i ? BarBrush : BarDim);
+            var brush = p.Live ? LiveBrush : p.Record && (_hover == -1 || _hover == i) ? RecordBrush : (_hover == -1 || _hover == i ? BarBrush : BarDim);
             dc.DrawRoundedRectangle(brush, p.Record ? RecordPen : null, r, Math.Min(5, barW / 2), Math.Min(5, barW / 2));
             if (p.Axis != null)
             {
@@ -171,7 +172,7 @@ public sealed class BarChart : FrameworkElement
             dc.DrawLine(AvgPen, new Point(plot.Left, y), new Point(plot.Right, y));
             var al = Text($"prom. {(_time ? Pretty.Minutes(avg) : Pretty.N(avg, 1))}", 10.5, MutedLight, NumFace);
             var bg = new Rect(plot.Right - al.Width - 10, y - al.Height / 2 - 1, al.Width + 8, al.Height + 2);
-            dc.DrawRoundedRectangle(Frozen(new SolidColorBrush(Color.FromRgb(0x12, 0x17, 0x22))), null, bg, 4, 4);
+            dc.DrawRoundedRectangle(Palette.Surface, null, bg, 4, 4);
             dc.DrawText(al, new Point(bg.Left + 4, bg.Top + 1));
         }
 
@@ -246,11 +247,11 @@ public sealed class MatchTimeline : FrameworkElement
 
     private static readonly Typeface Face = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
     private static readonly Typeface NumFace = new(new FontFamily("Bahnschrift"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-    private static readonly Brush Track = Fz(Color.FromRgb(0x1F, 0x26, 0x36));
-    private static readonly Brush Tick = Fz(Color.FromRgb(0x73, 0x7D, 0x93));
-    private static readonly Brush Purple = Fz(Color.FromRgb(0xB9, 0x94, 0xFF));
-    private static readonly Brush TipBg = Fz(Color.FromRgb(0x26, 0x2F, 0x44));
-    private static readonly Brush TextB = Fz(Color.FromRgb(0xEC, 0xEF, 0xF5));
+    private static readonly Brush Track = Palette.Surface2;
+    private static readonly Brush Tick = Palette.Dim;
+    private static readonly Brush Purple = Palette.Purple;
+    private static readonly Brush TipBg = Palette.SurfaceHover;
+    private static readonly Brush TextB = Palette.Text;
     private static readonly Pen Cursor = new(Fz(Color.FromArgb(0x60, 0xFF, 0xFF, 0xFF)), 1);
 
     private static Brush Fz(Color c)
@@ -260,13 +261,11 @@ public sealed class MatchTimeline : FrameworkElement
         return b;
     }
 
+    /// <summary>Todos los cofres van en el mismo oro: el nombre ya dice qué tipo es. Lo que no es cofre, en gris.</summary>
     public static Brush KindBrush(string kind) => Snapshot.ColorKey(kind) switch
     {
-        "Rare" => Fz(Color.FromRgb(0x55, 0xB8, 0xFF)),
-        "Buried" => Fz(Color.FromRgb(0xC0, 0x8A, 0x5B)),
-        "Sprite" => Fz(Color.FromRgb(0xB9, 0x94, 0xFF)),
-        "Normal" => Fz(Color.FromRgb(0xF7, 0xB9, 0x3E)),
-        _ => Fz(Color.FromRgb(0x9B, 0xA4, 0xB6)),
+        "Rare" or "Buried" or "Sprite" or "Normal" => Palette.GoldData,
+        _ => Palette.Dim,
     };
 
     public MatchTimeline()
@@ -338,7 +337,7 @@ public sealed class MatchTimeline : FrameworkElement
     }
 }
 
-/// <summary>Cofres por minuto (barras con color de calor) + % acumulado del total (línea azul, eje derecho).</summary>
+/// <summary>Cofres por minuto (barras con color de calor) + % acumulado del total (línea turquesa, eje derecho).</summary>
 public sealed class MinuteChart : FrameworkElement
 {
     private IReadOnlyList<MinuteStat> _data = Array.Empty<MinuteStat>();
@@ -346,15 +345,15 @@ public sealed class MinuteChart : FrameworkElement
 
     private static readonly Typeface Face = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
     private static readonly Typeface NumFace = new(new FontFamily("Bahnschrift"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-    private static readonly Color Cold = Color.FromRgb(0x4A, 0x3A, 0x1E), Hot = Color.FromRgb(0xFF, 0xC9, 0x4D);
-    private static readonly Brush Muted = Fz(Color.FromRgb(0x73, 0x7D, 0x93));
-    private static readonly Brush Blue = Fz(Color.FromRgb(0x55, 0xB8, 0xFF));
-    private static readonly Brush TipBg = Fz(Color.FromRgb(0x1F, 0x27, 0x39));
-    private static readonly Brush TextB = Fz(Color.FromRgb(0xEC, 0xEF, 0xF5));
+    private static readonly Color Cold = Palette.Gold900, Hot = Palette.Gold400;
+    private static readonly Brush Muted = Palette.Dim;
+    private static readonly Brush Blue = Palette.Teal;
+    private static readonly Brush TipBg = Palette.SurfaceHover;
+    private static readonly Brush TextB = Palette.Text;
     private static readonly Brush HoverCol = Fz(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF));
-    private static readonly Brush EarlyBand = Fz(Color.FromArgb(0x0C, 0xF7, 0xB9, 0x3E));
-    private static readonly Pen GridPen = new(Fz(Color.FromRgb(0x1C, 0x23, 0x33)), 1);
-    private static readonly Pen LinePen = new(Fz(Color.FromRgb(0x55, 0xB8, 0xFF)), 2) { LineJoin = PenLineJoin.Round };
+    private static readonly Brush EarlyBand = Fz(Palette.Alpha(Palette.Gold400, 0x0C));
+    private static readonly Pen GridPen = new(Palette.Surface2, 1);
+    private static readonly Pen LinePen = new(Palette.TealData, 2) { LineJoin = PenLineJoin.Round };
 
     private static Brush Fz(Color c)
     {

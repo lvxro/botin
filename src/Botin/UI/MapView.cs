@@ -23,14 +23,17 @@ public sealed class MapView : FrameworkElement
 
     private static readonly Typeface Face = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
     private static readonly Brush Dim = Fz(Color.FromArgb(0x55, 0x05, 0x07, 0x0C));
-    private static readonly Brush Empty = Fz(Color.FromRgb(0x0F, 0x13, 0x1C));
-    private static readonly Brush Label = Fz(Color.FromRgb(0xF2, 0xF4, 0xF8));
+    private static readonly Brush Empty = Palette.Surface2;
+    private static readonly Brush Label = Palette.Text;
     private static readonly Brush LabelShadow = Fz(Color.FromArgb(0xE6, 0x00, 0x00, 0x00));
-    private static readonly Brush Gold = Fz(Color.FromRgb(0xF7, 0xB9, 0x3E));
-    private static readonly Brush Muted = Fz(Color.FromRgb(0x9B, 0xA4, 0xB6));
-    private static readonly Pen RoutePen = new(Fz(Color.FromArgb(0xE6, 0x55, 0xB8, 0xFF)), 2.2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
-    private static readonly Pen DotRing = new(Fz(Color.FromRgb(0x1A, 0x12, 0x05)), 1);
+    private static readonly Brush Gold = Palette.Gold;
+    private static readonly Brush Muted = Palette.Muted;
+    // El recorrido va en turquesa con un borde oscuro debajo: así se ve igual sobre tierra, agua o nieve.
+    private static readonly Pen RoutePen = new(Palette.Teal, 2.2) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+    private static readonly Pen RouteCasing = new(Fz(Palette.Alpha(Palette.BgColor, 0xB0)), 4.6) { LineJoin = PenLineJoin.Round, StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+    private static readonly Pen DotRing = new(Palette.GoldInk, 1);
     private static readonly Brush Heat = MakeHeat();
+    private static readonly Brush Halo = Fz(Palette.Alpha(Palette.Gold400, 0x55));
 
     private static Brush Fz(Color c)
     {
@@ -42,9 +45,9 @@ public sealed class MapView : FrameworkElement
     private static Brush MakeHeat()
     {
         var b = new RadialGradientBrush();
-        b.GradientStops.Add(new GradientStop(Color.FromArgb(0x70, 0xFF, 0xD3, 0x6E), 0));
-        b.GradientStops.Add(new GradientStop(Color.FromArgb(0x38, 0xF7, 0x9B, 0x2E), 0.45));
-        b.GradientStops.Add(new GradientStop(Color.FromArgb(0x00, 0xE0, 0x60, 0x1C), 1));
+        b.GradientStops.Add(new GradientStop(Palette.Alpha(Palette.Gold300, 0x70), 0));
+        b.GradientStops.Add(new GradientStop(Palette.Alpha(Palette.Gold500, 0x38), 0.45));
+        b.GradientStops.Add(new GradientStop(Palette.Alpha(Palette.Gold700, 0x00), 1));
         b.Freeze();
         return b;
     }
@@ -285,9 +288,9 @@ public sealed class MapView : FrameworkElement
                 {
                     var rr = 5 + 13 * Math.Sqrt((double)l.Count / max);
                     var p = P(l.X, l.Y);
-                    dc.DrawEllipse(Fz(Color.FromArgb(0x55, 0xF7, 0xB9, 0x3E)), null, p, rr + 4, rr + 4);
+                    dc.DrawEllipse(Halo, null, p, rr + 4, rr + 4);
                     dc.DrawEllipse(Gold, DotRing, p, rr, rr);
-                    var n = Txt(l.Count.ToString(), rr > 10 ? 11 : 9.5, Fz(Color.FromRgb(0x1A, 0x12, 0x05)));
+                    var n = Txt(l.Count.ToString(), rr > 10 ? 11 : 9.5, Palette.GoldInk);
                     if (rr >= 8) dc.DrawText(n, new Point(p.X - n.Width / 2, p.Y - n.Height / 2));
                 }
                 break;
@@ -305,6 +308,7 @@ public sealed class MapView : FrameworkElement
                         }
                     }
                     geo.Freeze();
+                    dc.DrawGeometry(null, RouteCasing, geo);
                     dc.DrawGeometry(null, RoutePen, geo);
                 }
                 foreach (var c in _chests)
@@ -314,7 +318,7 @@ public sealed class MapView : FrameworkElement
                 if (_path is { Count: > 0 })
                 {
                     var end = P(_path[^1][1], _path[^1][2]);
-                    dc.DrawEllipse(Fz(Color.FromRgb(0xFF, 0x5C, 0x6C)), DotRing, end, 5, 5);
+                    dc.DrawEllipse(Palette.Red, DotRing, end, 5, 5);
                 }
                 break;
         }

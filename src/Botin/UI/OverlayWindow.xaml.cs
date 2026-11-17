@@ -14,8 +14,8 @@ public partial class OverlayWindow : Window
     private string? _lastSessionId;
     private Storyboard? _summaryAnim;
 
-    private static readonly Brush LabelBrush = Frozen(Color.FromRgb(0x8F, 0x98, 0xAB));
-    private static readonly Brush LiveBrush = Frozen(Color.FromRgb(0xFF, 0x8E, 0x99));
+    private static readonly Brush LabelBrush = Palette.Dim;
+    private static readonly Brush LiveBrush = Palette.Red;
 
     private static Brush Frozen(Color c)
     {

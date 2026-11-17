@@ -6,13 +6,10 @@ Contador de cofres de Fortnite. **Una sola app**: el contador, las estadísticas
 
 - Lee los replays que Fortnite guarda al terminar cada partida y suma los cofres que abriste, más los **tesoros** de la búsqueda del tesoro.
 - **Overlay** sobre el juego: total, sesión, última partida (o partida en curso) y tesoros. Al terminar cada partida, el total cuenta hacia arriba y aparece un resumen: cofres, tesoros, puesto y si fue récord.
-- **Ventana principal** con todo junto:
-  - total, sesión, última partida y tesoros, con tendencia contra tu promedio (▲/▼);
-  - gráfico de cofres **por partida** o **por día**, y **tiempo de juego** por día con tu **ritmo en cofres por hora** (hoy, últimos 7 días, sesión y mejor día);
-  - **¿Cuándo saqueás?**: cofres por minuto desde que aterrizás, sumando todas tus partidas, con un consejo según tu forma de jugar;
-  - **¿Dónde saqueás?**: mapa de calor de tus cofres sobre el mapa de la temporada, los lugares donde más saqueás y en cuáles te conviene caer (cuántos cofres terminás abriendo según dónde caés);
-  - **chance acumulada del token de la tienda pirata** con los cofres de la temporada (1 en 137.500 por cofre, según Epic);
-  - récord, tipos de cofre e historial. Al hacer clic en una partida se abre su **línea de tiempo** (cada cofre en su minuto y de qué cofre salió cada tesoro) y **tu recorrido en el mapa**.
+- **Ventana principal** con un menú lateral de tres secciones:
+  - **Inicio**: total, sesión, última partida y tesoros, con tendencia contra tu promedio (▲/▼); gráfico de cofres **por partida** o **por día**, y **tiempo de juego** por día con tu **ritmo en cofres por hora** (hoy, últimos 7 días, sesión y mejor día); récord, tipos de cofre y la **chance acumulada del token de la tienda pirata** con los cofres de la temporada (1 en 137.500 por cofre, según Epic);
+  - **Partidas**: el historial y la actividad. Al hacer clic en una partida se abre su **línea de tiempo** (cada cofre en su minuto y de qué cofre salió cada tesoro) y **tu recorrido en el mapa**;
+  - **Saqueo**: **¿Cuándo saqueás?** (cofres por minuto desde que aterrizás, con un consejo según tu forma de jugar) y **¿Dónde saqueás?** (mapa de calor de tus cofres sobre el mapa de la temporada, los lugares donde más saqueás y en cuáles te conviene caer).
 - Queda en la **bandeja** (al lado del reloj) y puede **iniciar con Windows**.
 - Opcional: **abrir y cerrar junto con Fortnite**. Cuando cerrás el juego, Botín cuenta tu última partida y se cierra; vuelve a abrirse solo con Fortnite.
 - Si tenías **Fortnite Chest Counter**, trae tu historial solo y te ofrece desinstalarlo (va a la papelera).

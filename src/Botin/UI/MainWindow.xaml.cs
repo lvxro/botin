@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     {
         _app = app;
         InitializeComponent();
-        SourceInitialized += (_, _) => Native.DarkTitleBar(new WindowInteropHelper(this).Handle, 0x0B0E14);
+        SourceInitialized += (_, _) => Native.DarkTitleBar(new WindowInteropHelper(this).Handle, 0x090E18);
         Closing += (_, e) =>
         {
             if (_app.Config.CloseToTray && !_app.Quitting)
@@ -85,6 +85,9 @@ public partial class MainWindow : Window
         var empty = s.Matches == 0 && !s.InMatch;
         EmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         DataArea.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+        // Sin partidas, Partidas y Saqueo no tienen nada que mostrar: queda solo Inicio con los pasos para empezar.
+        NavMatches.IsEnabled = NavLoot.IsEnabled = !empty;
+        if (empty && _page != Page.Home) ShowPage(Page.Home);
         if (empty) return;
 
         var timeMode = ByTime.IsChecked == true;
@@ -157,11 +160,11 @@ public partial class MainWindow : Window
             Ratio = Math.Max(0.02, r.ChestsRatio),
             PlaceBrush = r.Win ? Res("Gold") : Res("Text"),
             PlaceWeight = r.Win ? FontWeights.Bold : FontWeights.Normal,
-            ChestBrush = r.IsRecord ? Res("Gold") : (Brush)new SolidColorBrush(Color.FromRgb(0xC9, 0x9A, 0x3A)),
+            ChestBrush = r.IsRecord ? Res("Gold") : Res("GoldData"),
             TreasureLabel = r.Treasures > 0 ? $"★ {r.Treasures}" : "",
             TreasureTip = r.TreasureText,
             HasTreasure = r.Treasures > 0,
-            RowBg = r.Win ? (Brush)new SolidColorBrush(Color.FromArgb(0x10, 0xF7, 0xB9, 0x3E)) : Brushes.Transparent,
+            RowBg = r.Win ? WinRowBg : Brushes.Transparent,
             Id = r.Match.SessionId,
             Chevron = _expanded.Contains(r.Match.SessionId) ? "\uE70E" : "\uE70D",
             DetailVisibility = _expanded.Contains(r.Match.SessionId) ? Visibility.Visible : Visibility.Collapsed,
@@ -251,7 +254,7 @@ public partial class MainWindow : Window
             Detail = $"caíste {l.Times} {(l.Times == 1 ? "vez" : "veces")} · récord {l.Best}" + (ReferenceEquals(l, best) ? " · tu mejor lugar" : ""),
             Avg = Pretty.N(l.AvgChests, 0),
             AvgBrush = ReferenceEquals(l, best) ? Res("Gold") : Res("Text"),
-            Bg = ReferenceEquals(l, best) ? (Brush)new SolidColorBrush(Color.FromArgb(0x1C, 0xF7, 0xB9, 0x3E)) : Res("Surface2"),
+            Bg = ReferenceEquals(l, best) ? Res("GoldSoft") : Res("Surface2"),
         }).ToList();
     }
 
@@ -458,19 +461,45 @@ public partial class MainWindow : Window
     /// <summary>" · 230 cofres/h" (o nada si se jugó muy poco para que el número diga algo).</summary>
     private static string Rate(double? perHour) => perHour is double r ? $" · {Pretty.N(r)} cofres/h" : "";
 
-    private static Brush TypeBrush(string key) => key switch
-    {
-        "Rare" => Res("Blue"),
-        "Buried" => new SolidColorBrush(Color.FromRgb(0xC0, 0x8A, 0x5B)),
-        "Sprite" => Res("Purple"),
-        "Normal" => Res("Gold"),
-        _ => Res("Muted"),
-    };
+    /// <summary>Todos los tipos de cofre van en el mismo oro: el nombre ya dice cuál es.</summary>
+    private static Brush TypeBrush(string colorKey) => colorKey is "Rare" or "Buried" or "Sprite" or "Normal" ? Palette.GoldData : Palette.Dim;
+
+    private static readonly Brush WinRowBg = Palette.B(Palette.Alpha(Palette.Gold400, 0x10));
 
     public void RenderOverlayState()
     {
         OverlaySwitch.IsChecked = _app.Config.OverlayEnabled;
         MoveText.Text = _app.Overlay.MoveMode ? "Fijar" : "Ubicar";
+    }
+
+    // =============================== Secciones ===============================
+
+    public enum Page { Home, Matches, Loot }
+
+    private Page _page = Page.Home;
+
+    private void Nav_Click(object sender, RoutedEventArgs e) =>
+        ShowPage(ReferenceEquals(sender, NavMatches) ? Page.Matches : ReferenceEquals(sender, NavLoot) ? Page.Loot : Page.Home);
+
+    /// <summary>Muestra una sección (Inicio, Partidas o Saqueo) desde arriba, con una entrada corta.</summary>
+    public void ShowPage(Page page)
+    {
+        _page = page;
+        NavHome.IsChecked = page == Page.Home;
+        NavMatches.IsChecked = page == Page.Matches;
+        NavLoot.IsChecked = page == Page.Loot;
+        PageHome.Visibility = page == Page.Home ? Visibility.Visible : Visibility.Collapsed;
+        PageMatches.Visibility = page == Page.Matches ? Visibility.Visible : Visibility.Collapsed;
+        PageLoot.Visibility = page == Page.Loot ? Visibility.Visible : Visibility.Collapsed;
+        PageTitle.Text = page switch { Page.Matches => "Partidas", Page.Loot => "Saqueo", _ => "Inicio" };
+        Scroller.ScrollToTop();
+
+        // Transición corta (150 ms). Si el usuario apagó las animaciones de Windows, cambia directo.
+        UIElement shown = page switch { Page.Matches => PageMatches, Page.Loot => PageLoot, _ => PageHome };
+        if (SystemParameters.ClientAreaAnimation)
+        {
+            shown.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)));
+        }
     }
 
     // =============================== Encabezado ===============================
