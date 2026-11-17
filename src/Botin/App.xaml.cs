@@ -197,7 +197,7 @@ public partial class App : Application
         Refresh();
         Overlay.Show();
         var snap = Snapshot.Build(Tracker, Config, FortniteRunning);
-        if (snap.Last != null) Overlay.PinSummaryForShot(snap.Last, isRecord: true, snap);
+        if (snap.Last != null) Overlay.PinSummaryForShot(snap.Last, snap);
         await Task.Delay(800);
         Save((FrameworkElement)Window.Content, Path.Combine(dir, "main.png"));
         if (Window.FindName("Scroller") is System.Windows.Controls.ScrollViewer sv && sv.Content is FrameworkElement inner)
@@ -315,7 +315,7 @@ public partial class App : Application
         var snap = Snapshot.Build(Tracker, Config, FortniteRunning);
         if (snap.Last != null)
         {
-            Overlay.PinSummaryForShot(snap.Last, isRecord: true, snap);
+            Overlay.PinSummaryForShot(snap.Last, snap);
             await Task.Delay(700);
             // RenderTargetBitmap dibuja el elemento donde está dentro de su padre: para la foto, el momento va arriba de todo.
             var margin = Overlay.Summary.Margin;

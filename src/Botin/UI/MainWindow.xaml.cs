@@ -630,6 +630,10 @@ public partial class MainWindow : Window
         OpacityLabel.Text = $"{OpacitySlider.Value:0} %";
         ShowSession.IsChecked = c.OverlayShowSession;
         ShowGoal.IsChecked = c.OverlayShowGoal;
+        CelebFull.IsChecked = c.Celebrations is not ("subtle" or "off");
+        CelebSubtle.IsChecked = c.Celebrations == "subtle";
+        CelebOff.IsChecked = c.Celebrations == "off";
+        SetSound.IsChecked = c.CelebrationSound;
         LoadGoal();
         ShowTreasures.IsChecked = c.OverlayShowTreasures;
         SetCompact.IsChecked = c.OverlayCompact;
@@ -654,6 +658,8 @@ public partial class MainWindow : Window
         c.OverlayMode = ModeAlways.IsChecked == true ? "always" : "auto";
         c.OverlayShowSession = ShowSession.IsChecked == true;
         c.OverlayShowGoal = ShowGoal.IsChecked == true;
+        c.Celebrations = CelebOff.IsChecked == true ? "off" : CelebSubtle.IsChecked == true ? "subtle" : "full";
+        c.CelebrationSound = SetSound.IsChecked == true;
         c.OverlayShowTreasures = ShowTreasures.IsChecked == true;
         c.OverlayCompact = SetCompact.IsChecked == true;
         c.CloseToTray = SetTray.IsChecked == true;

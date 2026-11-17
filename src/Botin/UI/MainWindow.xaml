@@ -796,7 +796,23 @@
                             <CheckBox x:Name="SetCompact" Style="{StaticResource Switch}" Margin="0,18,0,0" Click="SettingChanged">
                                 <StackPanel>
                                     <TextBlock Text="Modo compacto" FontSize="13.5" FontWeight="SemiBold"/>
-                                    <TextBlock Text="Solo el anillo y el total. La sesión y los tesoros aparecen unos segundos al terminar cada partida." Style="{StaticResource Sub}"/>
+                                    <TextBlock Text="Solo el anillo y el total, también en el lobby. Durante la partida siempre se ve así; la sesión y los tesoros aparecen al terminar." Style="{StaticResource Sub}"/>
+                                </StackPanel>
+                            </CheckBox>
+                            <TextBlock Text="Festejo al terminar la partida" FontSize="13" FontWeight="SemiBold" Margin="0,18,0,8"/>
+                            <Border Background="{StaticResource Bg}" CornerRadius="10" Padding="4" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="CelebFull" Style="{StaticResource Segment}" GroupName="celeb" Content="Completo" Click="SettingChanged"/>
+                                    <RadioButton x:Name="CelebSubtle" Style="{StaticResource Segment}" GroupName="celeb" Content="Sutil" Click="SettingChanged"/>
+                                    <RadioButton x:Name="CelebOff" Style="{StaticResource Segment}" GroupName="celeb" Content="Apagado" Click="SettingChanged"/>
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Style="{StaticResource Sub}" FontSize="11.5" Margin="0,6,0,0"
+                                       Text="Completo: nota de la partida, logros, chispas y destellos. Sutil: nota y logros, sin chispas. Apagado: solo se actualiza el total."/>
+                            <CheckBox x:Name="SetSound" Style="{StaticResource Switch}" Margin="0,14,0,0" Click="SettingChanged">
+                                <StackPanel>
+                                    <TextBlock Text="Sonido del festejo" FontSize="13.5" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Un tic mientras suben los cofres y un acorde con la nota. Bajito, encima del juego." Style="{StaticResource Sub}"/>
                                 </StackPanel>
                             </CheckBox>
                             <TextBlock Text="Qué muestra" FontSize="13" FontWeight="SemiBold" Margin="0,18,0,4"/>

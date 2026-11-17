@@ -109,6 +109,10 @@ public sealed class Config
     public bool OverlayShowSession { get; set; } = true;
     /// <summary>Anillo con los cofres del día de juego contra la meta del día.</summary>
     public bool OverlayShowGoal { get; set; } = true;
+    /// <summary>Festejo al terminar la partida: "full" (completo), "subtle" (sin chispas ni destellos) u "off".</summary>
+    public string Celebrations { get; set; } = "full";
+    /// <summary>Sonido del festejo (tic de los cofres, sello de la nota, meta e hitos).</summary>
+    public bool CelebrationSound { get; set; } = true;
     /// <summary>Meta de cofres por día de juego. Null = automática (tu día típico).</summary>
     public int? DailyGoal { get; set; }
     public bool OverlayShowTreasures { get; set; } = true;

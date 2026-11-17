@@ -42,6 +42,10 @@ public static class Palette
     public static readonly Brush Teal = B(TealColor);
     public static readonly Brush TealData = B(TealDataColor);
 
+    // Racha (fuego): el mismo naranja que el aviso de la paleta.
+    public static readonly Color FireColor = Rgb(0xF99549);
+    public static readonly Brush Fire = B(FireColor);
+
     // Estados (reservados): mejor y peor que tu promedio, en partida, errores.
     public static readonly Color GreenColor = Rgb(0x59D483), RedColor = Rgb(0xFA6863);
     public static readonly Brush Green = B(GreenColor);

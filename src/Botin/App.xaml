@@ -26,6 +26,7 @@
         <x:Static x:Key="PurpleSoft" Member="ui:Palette.PurpleSoft"/>
         <x:Static x:Key="Teal" Member="ui:Palette.Teal"/>
         <x:Static x:Key="TealData" Member="ui:Palette.TealData"/>
+        <x:Static x:Key="Fire" Member="ui:Palette.Fire"/>
         <x:Static x:Key="Green" Member="ui:Palette.Green"/>
         <x:Static x:Key="Red" Member="ui:Palette.Red"/>
         <x:Static x:Key="UpBg" Member="ui:Palette.UpBg"/>

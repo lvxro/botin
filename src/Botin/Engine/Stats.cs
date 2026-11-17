@@ -163,6 +163,74 @@ public static class GameDay
     }
 }
 
+/// <summary>Un logro de la partida para el momento del overlay. Tone: gold, teal, violet o fire; Icon: bolt, star, fire, crown, check o chest.</summary>
+public sealed record Accolade(string Tone, string Icon, string Text);
+
+/// <summary>Nota de una partida (C, B, A, S o R de récord) y sus logros.</summary>
+public sealed record MatchGrade(string Grade, string Name, IReadOnlyList<Accolade> Accolades);
+
+/// <summary>
+/// Nota personal de cada partida: se compara con tus últimas 150 (no con un número fijo), así una S siempre cuesta.
+/// C = menos que tu mitad, B = mitad de arriba, A = tu 25 % mejor, S = tu 10 % mejor, R = récord.
+/// </summary>
+public static class Moments
+{
+    private const int History = 150;
+
+    private static int Early(MatchRecord m)
+    {
+        if (m.Chests.Count == 0) return 0;
+        var first = m.Chests.Min(c => c.TimeSeconds);
+        return m.Chests.Count(c => c.TimeSeconds - first <= 180);
+    }
+
+    private static int Quantile(IReadOnlyList<int> sorted, double p) => sorted[(int)(p * (sorted.Count - 1))];
+
+    /// <summary>Nota y logros de <paramref name="m"/> comparada con las partidas anteriores (null si hay menos de 10).</summary>
+    public static MatchGrade? For(MatchRecord m, IReadOnlyList<MatchRecord> before)
+    {
+        var played = before.Where(x => x.ChestsOpened > 0).TakeLast(History).ToList();
+        if (played.Count < 10) return null;
+        var hist = played.Select(x => x.ChestsOpened).OrderBy(x => x).ToList();
+        var prevMax = before.Max(x => x.ChestsOpened);
+        var c = m.ChestsOpened;
+        var (grade, name) = c > prevMax ? ("R", "Récord")
+            : c >= Quantile(hist, 0.9) ? ("S", "Legendaria")
+            : c >= Quantile(hist, 0.75) ? ("A", "Épica")
+            : c >= Quantile(hist, 0.5) ? ("B", "Buena")
+            : ("C", "Normal");
+
+        var list = new List<Accolade>();
+        if (grade == "R") list.Add(new Accolade("gold", "crown", $"Nuevo récord · antes {Pretty.N(prevMax)}"));
+
+        var early = Early(m);
+        var earlyHist = played.Where(x => x.Chests.Count > 0).Select(Early).OrderBy(x => x).ToList();
+        if (earlyHist.Count >= 10 && early > 0)
+        {
+            if (early >= Quantile(earlyHist, 0.9)) list.Add(new Accolade("gold", "bolt", $"Aterrizaje dorado · {early} en 3 min"));
+            else if (early >= Quantile(earlyHist, 0.75)) list.Add(new Accolade("teal", "bolt", $"Buen arranque · {early} en 3 min"));
+        }
+
+        var streak = StreakEnding(before.Append(m).ToList());
+        if (streak >= 2) list.Add(new Accolade("fire", "fire", $"Racha x{streak} sobre tu promedio"));
+
+        var t = m.TreasureFinds.Count;
+        if (t > 0) list.Add(new Accolade("violet", "star", t == 1 ? "+1 tesoro" : $"+{t} tesoros"));
+
+        return new MatchGrade(grade, name, list.Take(3).ToList());
+    }
+
+    /// <summary>Partidas seguidas, contando desde la última, por encima de tu promedio.</summary>
+    public static int StreakEnding(IReadOnlyList<MatchRecord> ordered)
+    {
+        if (ordered.Count < 2) return 0;
+        var avg = ordered.Average(x => x.ChestsOpened);
+        var n = 0;
+        for (var i = ordered.Count - 1; i >= 0 && ordered[i].ChestsOpened > avg; i--) n++;
+        return n;
+    }
+}
+
 /// <summary>Una barra: cofres (o minutos, en el gráfico de tiempo).</summary>
 public sealed record ChartPoint(int Value, int Treasures, string Label, bool Live, bool Record = false, string? Axis = null);
 
@@ -221,6 +289,9 @@ public sealed class Snapshot
     public int GoalChests { get; init; }
     public int Goal { get; init; }
     public int? GoalAuto { get; init; }
+    /// <summary>Nota y logros de la última partida, y la racha actual de partidas arriba de tu promedio.</summary>
+    public MatchGrade? LastGrade { get; init; }
+    public int Streak { get; init; }
     /// <summary>Minutos jugados y cofres por hora en el día de juego actual (con el lobby entre partidas).</summary>
     public double GoalMinutes { get; init; }
     public double? GoalRate { get; init; }
@@ -381,6 +452,8 @@ public sealed class Snapshot
                 GoalChests = gameDay.Chests,
                 GoalAuto = gameDay.Auto,
                 GoalMinutes = daySessions.Sum(x => x.Minutes),
+                LastGrade = matches.Count > 0 ? Moments.For(matches[^1], matches.Take(matches.Count - 1).ToList()) : null,
+                Streak = Moments.StreakEnding(matches),
                 GoalRate = PlaySession.PerHour(daySessions),
                 Goal = c.DailyGoal is int g && g > 0 ? g : gameDay.Auto ?? 500,
                 Curve = LootCurve.Build(matches),
