@@ -7,7 +7,7 @@
         TextOptions.TextFormattingMode="Display">
     <!--
         Overlay de Botín. Una sola pastilla, lo más quieta posible mientras jugás:
-        anillo de la meta del día (con el cofre al centro, o un punto rojo que late durante la partida),
+        anillo de la meta del día (con el porcentaje al centro y un punto rojo que late durante la partida),
         el total y, al lado, la sesión y los tesoros. Al terminar una partida aparece debajo el "momento":
         los cofres de esa partida suben, el récord brilla y después se actualizan el total y el anillo.
         Los colores salen de la paleta (UI/Palette.cs); los degradés llevan los mismos valores en hex.
@@ -76,7 +76,11 @@
                             <Ellipse x:Name="RingGlow" Stroke="{StaticResource Gold}" StrokeThickness="4" Opacity="0" IsHitTestVisible="False">
                                 <Ellipse.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="0" Color="#FCBB39" Opacity="1"/></Ellipse.Effect>
                             </Ellipse>
-                            <Image x:Name="RingIcon" Source="{StaticResource ChestIcon}" Width="26" Height="26" Margin="0,1,0,0"/>
+                            <!-- Centro del anillo: cuánto de la meta llevás (o ✓ cuando la cumpliste) -->
+                            <TextBlock x:Name="RingPct" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1,0,0,1"
+                                       FontFamily="{StaticResource NumFont}" FontWeight="Bold" FontSize="14" Foreground="{StaticResource Text}">
+                                <Run x:Name="RingPctValue" Text="0"/><Run x:Name="RingPctUnit" Text="%" FontSize="9" Foreground="{StaticResource Dim}"/>
+                            </TextBlock>
                             <!-- Durante la partida: una insignia roja que late en la esquina del anillo; el cofre queda -->
                             <Grid x:Name="LiveDot" Width="11" Height="11" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0" Visibility="Collapsed">
                                 <Ellipse x:Name="LiveHalo" Fill="{StaticResource Red}" RenderTransformOrigin="0.5,0.5">

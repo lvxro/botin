@@ -298,6 +298,12 @@ public partial class OverlayWindow : Window
     private void DrawRing(double p)
     {
         const double c = 22, r = 20;
+        // El número del centro acompaña al arco mientras se anima.
+        var done = p >= 0.9995;
+        RingPctValue.Text = done ? "✓" : Pretty.N(Math.Floor(p * 100));
+        RingPctValue.Foreground = done ? Palette.Gold : Palette.Text;
+        RingPctValue.FontSize = done ? 17 : 14;
+        RingPctUnit.Text = done ? "" : "%";
         p = Math.Clamp(p, 0, 1);
         if (p < 0.004)
         {
@@ -431,7 +437,7 @@ public partial class OverlayWindow : Window
         if (s.Goal > 0)
         {
             if (goalReached || s.GoalChests >= s.Goal) Add("¡meta del día cumplida!", Palette.Gold);
-            else Add($"meta {Pretty.N(100.0 * s.GoalChests / s.Goal)} %", Palette.Muted);
+            else Add($"meta {Pretty.N(Math.Floor(100.0 * s.GoalChests / s.Goal))} %", Palette.Muted);
         }
         SummaryFacts.Visibility = SummaryFacts.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
